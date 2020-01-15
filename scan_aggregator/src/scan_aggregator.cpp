@@ -27,15 +27,12 @@ public:
         sync_(Policy(20), ScanAggregator::pc_sub_, ScanAggregator::odom_sub_)
     {
         float duration;
-        float overlap_period;
         float scanner_frequency;
 
         nh_.param<float>("duration", duration, 0.2);
-        nh_.param<float>("overlap_period", overlap_period, 0.0);
         nh_.param<float>("scanner_frequency", scanner_frequency, 80.0);
 
         max_buffer_size_ = static_cast<int>(round(scanner_frequency * duration));
-        overlap_size_ = std::min(static_cast<int>(round(scanner_frequency * overlap_period)), max_buffer_size_);
 
         sync_.registerCallback(boost::bind(&ScanAggregator::callback, this, _1, _2));
         pub_ = nh_.advertise<sensor_msgs::PointCloud2>("aggregate_scan", 20);
@@ -69,8 +66,7 @@ public:
         cloud_out.header.frame_id = cloud_msg->header.frame_id;
         pub_.publish(cloud_out);
 
-        while (cloud_buffer_.size() > overlap_size_)
-            cloud_buffer_.pop_front();
+        cloud_buffer_.clear();
 
     }
 
@@ -78,7 +74,6 @@ private:
 
     ros::NodeHandle nh_;
     int max_buffer_size_;
-    int overlap_size_;
 
     message_filters::Subscriber<PointCloud> pc_sub_;
     message_filters::Subscriber<nav_msgs::Odometry> odom_sub_;
