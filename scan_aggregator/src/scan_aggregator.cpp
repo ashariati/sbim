@@ -29,7 +29,7 @@ public:
         float duration;
         float scanner_frequency;
 
-        nh_.param<float>("duration", duration, 0.2);
+        nh_.param<float>("duration", duration, 0.15);
         nh_.param<float>("scanner_frequency", scanner_frequency, 80.0);
 
         max_buffer_size_ = static_cast<int>(round(scanner_frequency * duration));
