@@ -23,13 +23,12 @@ class ScanAggregator {
 public:
 
     ScanAggregator() : nh_("~"), pc_sub_(nh_, "/puck/scan_transformed_corrected", 10),
-        odom_sub_(nh_, "/odometry", 100),
-        sync_(Policy(20), ScanAggregator::pc_sub_, ScanAggregator::odom_sub_)
-    {
+                       odom_sub_(nh_, "/odometry", 100),
+                       sync_(Policy(20), ScanAggregator::pc_sub_, ScanAggregator::odom_sub_) {
         float duration;
         float scanner_frequency;
 
-        nh_.param<float>("duration", duration, 0.15);
+        nh_.param<float>("duration", duration, 0.1);
         nh_.param<float>("scanner_frequency", scanner_frequency, 80.0);
 
         max_buffer_size_ = static_cast<int>(round(scanner_frequency * duration));
@@ -38,8 +37,7 @@ public:
         pub_ = nh_.advertise<sensor_msgs::PointCloud2>("aggregate_scan", 20);
     }
 
-    void callback(const PointCloud::ConstPtr& cloud_msg, const nav_msgs::Odometry::ConstPtr& odom_msg)
-    {
+    void callback(const PointCloud::ConstPtr &cloud_msg, const nav_msgs::Odometry::ConstPtr &odom_msg) {
         Eigen::Isometry3d G;
         tf::poseMsgToEigen(odom_msg->pose.pose, G);
 
@@ -63,6 +61,7 @@ public:
         sensor_msgs::PointCloud2 cloud_out;
         pcl::toROSMsg(vehicle_aggregate_cloud, cloud_out);
         cloud_out.header.stamp = odom_msg->header.stamp;
+        // cloud_out.header.stamp = ros::Time::now();
         cloud_out.header.frame_id = cloud_msg->header.frame_id;
         pub_.publish(cloud_out);
 
@@ -84,8 +83,7 @@ private:
 
 };
 
-int main(int argc, char** argv)
-{
+int main(int argc, char **argv) {
 
     ros::init(argc, argv, "scan_aggregator");
 
