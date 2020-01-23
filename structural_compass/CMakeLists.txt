@@ -27,6 +27,8 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(PCL REQUIRED)
 find_package(Eigen3 REQUIRED)
 
+find_package(Catch2 REQUIRED)
+
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
@@ -222,3 +224,6 @@ target_link_libraries(point_cloud_compass_node
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+add_executable(structural_compass-test test/test_structural_compass.cpp)
+target_link_libraries(structural_compass-test Catch2::Catch2 ${PCL_LIBRARIES})

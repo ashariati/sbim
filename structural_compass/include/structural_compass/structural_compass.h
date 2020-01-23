@@ -16,13 +16,15 @@ namespace structural_compass {
     template<typename PointCloud>
     class EntropyCompass {
 
+    private:
+
         std::vector<float> searchSpace() const;
 
         float cloudEntropy(const PointCloud &point_cloud) const;
 
-        Eigen::VectorXf histogramCounts(const std::vector<float> &points, const Eigen::VectorXf &edges) const;
+        Eigen::ArrayXf histogramCounts(const std::vector<float> &points, const Eigen::ArrayXf &edges) const;
 
-        float histogramEntropy(Eigen::VectorXf &histogram) const;
+        float histogramEntropy(Eigen::ArrayXf &histogram) const;
 
     public:
 
@@ -103,10 +105,10 @@ namespace structural_compass {
         pcl::PointXYZ max_point{};
         pcl::getMinMax3D(point_cloud, min_point, max_point);
 
-        Eigen::VectorXf x_edges = Eigen::VectorXf::LinSpaced(static_cast<long>((max_point.x - min_point.x) / res),
-                                                             min_point.x, max_point.x);
-        Eigen::VectorXf y_edges = Eigen::VectorXf::LinSpaced(static_cast<long>((max_point.y - min_point.y) / res),
-                                                             min_point.y, max_point.y);
+        Eigen::ArrayXf x_edges = Eigen::ArrayXf::LinSpaced(static_cast<long>((max_point.x - min_point.x) / res),
+                                                           min_point.x, max_point.x);
+        Eigen::ArrayXf y_edges = Eigen::ArrayXf::LinSpaced(static_cast<long>((max_point.y - min_point.y) / res),
+                                                           min_point.y, max_point.y);
 
         std::vector<float> x_points;
         std::vector<float> y_points;
@@ -117,9 +119,9 @@ namespace structural_compass {
             y_points.push_back(p.y);
         }
 
-        Eigen::VectorXf x_bins;
+        Eigen::ArrayXf x_bins;
         x_bins = histogramCounts(x_points, x_edges);
-        Eigen::VectorXf y_bins;
+        Eigen::ArrayXf y_bins;
         y_bins = histogramCounts(y_points, y_edges);
 
         float H_x = histogramEntropy(x_bins);
@@ -129,10 +131,10 @@ namespace structural_compass {
     }
 
     template<typename PointCloud>
-    Eigen::VectorXf
-    EntropyCompass<PointCloud>::histogramCounts(const std::vector<float> &points, const Eigen::VectorXf &edges) const {
+    Eigen::ArrayXf
+    EntropyCompass<PointCloud>::histogramCounts(const std::vector<float> &points, const Eigen::ArrayXf &edges) const {
 
-        Eigen::VectorXf bins = Eigen::VectorXf::Zero(edges.size() - 1);
+        Eigen::ArrayXf bins = Eigen::ArrayXf::Zero(edges.size() - 1);
         for (size_t i = 0; i < bins.size(); ++i) {
 
             auto e_min = edges[i];
@@ -151,11 +153,11 @@ namespace structural_compass {
 
     template<typename PointCloud>
     float
-    EntropyCompass<PointCloud>::histogramEntropy(Eigen::VectorXf &histogram) const {
+    EntropyCompass<PointCloud>::histogramEntropy(Eigen::ArrayXf &histogram) const {
 
-        Eigen::VectorXf p = histogram / histogram.sum();
-        Eigen::VectorXf logp = p.array().log();
-        return -(static_cast<float>(p.adjoint() * logp));
+        Eigen::ArrayXf p = histogram / histogram.sum();
+        Eigen::ArrayXf logp = p.log();
+        return -(static_cast<float>((p * logp).sum()));
     }
 
 }
