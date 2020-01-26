@@ -56,16 +56,14 @@ namespace structural_compass {
         pcl::transformPointCloud(point_cloud, P_g, G_cg.inverse());
 
         // find entropy-minimizing rotation
+        PointCloud P_th;
+        Eigen::Isometry3f R_th = Eigen::Isometry3f::Identity();
         std::vector<float> objective;
         auto search_space = searchSpace();
         for (auto theta : search_space) {
-            Eigen::Isometry3f R_th = Eigen::Isometry3f::Identity();
             R_th.rotate(Eigen::AngleAxisf(theta, Eigen::Vector3f::UnitZ()));
-
-            PointCloud P;
-            pcl::transformPointCloud(P_g, P, R_th);
-
-            objective.push_back(cloudEntropy(P));
+            pcl::transformPointCloud(P_g, P_th, R_th);
+            objective.push_back(cloudEntropy(P_th));
         }
         int opt_index = std::distance(objective.begin(), std::min_element(objective.begin(), objective.end()));
         float theta_opt = search_space[opt_index];

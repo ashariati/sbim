@@ -92,7 +92,6 @@ TEST_CASE("Entropy Compass", "[EntropyCompass]") {
 
     std::string vector_file = std::string("/home/armon/Research/Data/exyn_building_scans/gravity_vectors.txt");
     Eigen::Vector3f gravity = gravityVectorFromFile(vector_file, cloud_id);
-    std::cout << gravity << std::endl;
 
     std::string cloud_file = std::string("/home/armon/Research/Data/exyn_building_scans/pointclouds_indexed/") +
                              std::string(3, '0') + std::to_string(cloud_id) + std::string(".pcd");
@@ -108,7 +107,7 @@ TEST_CASE("Entropy Compass", "[EntropyCompass]") {
         std::vector<Eigen::Vector3f> principal_directions;
         R = compass.principalDirections(*cloud_ptr, gravity, principal_directions);
 
-        visualizeCloud(cloud_ptr);
+        // visualizeCloud(cloud_ptr);
 
     }
 }
