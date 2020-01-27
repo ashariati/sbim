@@ -82,7 +82,7 @@ namespace structural_compass {
 
         float start = -M_PI_2;
         float stop = M_PI_2;
-        float step = 0.5 * (M_PI / 180.0);
+        float step = 3.0 * (M_PI / 180.0);
 
         std::vector<float> arange;
         for (float i = start; i < stop; i += step) {
