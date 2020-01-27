@@ -95,9 +95,9 @@ namespace structural_compass {
     template<typename PointCloud>
     float EntropyCompass<PointCloud>::cloudEntropy(const PointCloud &point_cloud) const {
 
-        const long kNumBins = 1000;
+        const long kNumBins = 100;
 
-        Eigen::ArrayXf e_data = Eigen::ArrayXf::LinSpaced(kNumBins + 1, -50.0, 50.0);
+        Eigen::ArrayXf e_data = Eigen::ArrayXf::LinSpaced(kNumBins + 1, -10.0, 10.0);
         std::vector<float> edges = std::vector<float>(e_data.data(), e_data.data() + e_data.size());
 
         Eigen::ArrayXf x_bins = Eigen::ArrayXf::Zero(edges.size() - 1);
