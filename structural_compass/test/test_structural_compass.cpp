@@ -67,23 +67,6 @@ TEST_CASE("Entropy Compass Utilities", "[EntropyCompass]") {
 
     }
 
-    SECTION("computing histogram counts") {
-
-        std::vector<float> points{6.3615, 2.3843, 18.7966, 12.9110, 9.5893, 12.7863, 10.8943, 12.9462, 10.8777,
-                                  14.4209};
-        Eigen::ArrayXf edges(11);
-        edges << 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20;
-
-        Eigen::ArrayXf gt_counts(10);
-        gt_counts << 0, 1, 0, 1, 1, 2, 3, 1, 0, 1;
-
-        auto counts = compass.histogramCounts(points, edges);
-
-        auto diff = (counts - gt_counts).abs();
-        REQUIRE(diff.sum() < 1e-4);
-
-    }
-
 }
 
 TEST_CASE("Entropy Compass", "[EntropyCompass]") {

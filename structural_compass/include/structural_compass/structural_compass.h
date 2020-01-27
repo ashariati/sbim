@@ -22,8 +22,6 @@ namespace structural_compass {
 
         float cloudEntropy(const PointCloud &point_cloud) const;
 
-        Eigen::ArrayXf histogramCounts(const std::vector<float> &points, const Eigen::ArrayXf &edges) const;
-
         float histogramEntropy(Eigen::ArrayXf &histogram) const;
 
     public:
@@ -97,56 +95,41 @@ namespace structural_compass {
     template<typename PointCloud>
     float EntropyCompass<PointCloud>::cloudEntropy(const PointCloud &point_cloud) const {
 
-        const float res = 0.03;
+        const long kNumBins = 1000;
 
-        pcl::PointXYZ min_point{};
-        pcl::PointXYZ max_point{};
-        pcl::getMinMax3D(point_cloud, min_point, max_point);
+        Eigen::ArrayXf e_data = Eigen::ArrayXf::LinSpaced(kNumBins + 1, -50.0, 50.0);
+        std::vector<float> edges = std::vector<float>(e_data.data(), e_data.data() + e_data.size());
 
-        Eigen::ArrayXf x_edges = Eigen::ArrayXf::LinSpaced(static_cast<long>((max_point.x - min_point.x) / res),
-                                                           min_point.x, max_point.x);
-        Eigen::ArrayXf y_edges = Eigen::ArrayXf::LinSpaced(static_cast<long>((max_point.y - min_point.y) / res),
-                                                           min_point.y, max_point.y);
+        Eigen::ArrayXf x_bins = Eigen::ArrayXf::Zero(edges.size() - 1);
+        Eigen::ArrayXf y_bins = Eigen::ArrayXf::Zero(edges.size() - 1);
 
-        std::vector<float> x_points;
-        std::vector<float> y_points;
         for (auto p : point_cloud.points) {
+
             if (!pcl_isfinite(p.x) || !pcl_isfinite(p.y))
                 continue;
-            x_points.push_back(p.x);
-            y_points.push_back(p.y);
-        }
 
-        Eigen::ArrayXf x_bins;
-        x_bins = histogramCounts(x_points, x_edges);
-        Eigen::ArrayXf y_bins;
-        y_bins = histogramCounts(y_points, y_edges);
+            int first_x_greater = std::distance(edges.begin(), std::lower_bound(edges.begin(), edges.end(), p.x));
+            int first_y_greater = std::distance(edges.begin(), std::lower_bound(edges.begin(), edges.end(), p.y));
+
+            bool out_of_range_x = ((first_x_greater == 0) ||
+                                   ((first_x_greater == edges.size()) && p.x > edges[first_x_greater]));
+            bool out_of_range_y = ((first_y_greater == 0) ||
+                                   ((first_y_greater == edges.size()) && p.y > edges[first_y_greater]));
+
+            if (!out_of_range_x) {
+                x_bins[first_x_greater - 1]++;
+            }
+
+            if (!out_of_range_y) {
+                y_bins[first_y_greater - 1]++;
+            }
+
+        }
 
         float H_x = histogramEntropy(x_bins);
         float H_y = histogramEntropy(y_bins);
 
         return H_x + H_y;
-    }
-
-    template<typename PointCloud>
-    Eigen::ArrayXf
-    EntropyCompass<PointCloud>::histogramCounts(const std::vector<float> &points, const Eigen::ArrayXf &edges) const {
-
-        Eigen::ArrayXf bins = Eigen::ArrayXf::Zero(edges.size() - 1);
-        for (size_t i = 0; i < bins.size(); ++i) {
-
-            auto e_min = edges[i];
-            auto e_max = edges[i + 1];
-
-            for (auto p : points) {
-                if (p < e_min || p > e_max)
-                    continue;
-                bins[i]++;
-            }
-
-        }
-
-        return bins;
     }
 
     template<typename PointCloud>
