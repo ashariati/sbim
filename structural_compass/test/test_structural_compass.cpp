@@ -67,6 +67,15 @@ TEST_CASE("Entropy Compass Utilities", "[EntropyCompass]") {
 
     }
 
+    SECTION("print search space") {
+        auto search_space = compass.searchSpace();
+        std::cout << "search space size: " << search_space.size() << std::endl;
+        for (auto s : search_space) {
+            std::cout << s << ", ";
+        }
+        std::cout << std::endl;
+    }
+
 }
 
 TEST_CASE("Entropy Compass", "[EntropyCompass]") {

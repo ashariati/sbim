@@ -36,29 +36,29 @@ public:
 
     void callback(const PointCloud::ConstPtr &cloud_msg, const nav_msgs::Odometry::ConstPtr &odom_msg) {
 
-        Eigen::Isometry3d G_wc;
-        tf::poseMsgToEigen(odom_msg->pose.pose, G_wc);
+        Eigen::Isometry3d G_ws;
+        tf::poseMsgToEigen(odom_msg->pose.pose, G_ws);
 
         Eigen::Vector3f gravity;
-        gravity << -G_wc(2, 0), -G_wc(2, 1), -G_wc(2, 2);
+        gravity << -G_ws(2, 0), -G_ws(2, 1), -G_ws(2, 2);
 
-        Eigen::Matrix3f R_cg;
+        Eigen::Matrix3f R_cs;
         std::vector<Eigen::Vector3f> directions;
-        R_cg = compass_->principalDirections(*cloud_msg, gravity, directions);
-        publish(R_cg, directions, odom_msg->header.stamp);
+        R_cs = compass_->principalDirections(*cloud_msg, gravity, directions);
+        publish(R_cs.transpose(), directions, odom_msg->header.stamp);
 
     }
 
     void publish(const Eigen::Matrix3f &R, const std::vector<Eigen::Vector3f> &directions, const ros::Time stamp) {
 
-        geometry_msgs::Quaternion q_cg;
-        tf::quaternionEigenToMsg(Eigen::Quaternionf(R).cast<double>(), q_cg);
+        geometry_msgs::Quaternion q;
+        tf::quaternionEigenToMsg(Eigen::Quaternionf(R).cast<double>(), q);
 
         geometry_msgs::TransformStamped transform;
         transform.header.frame_id = "vehicle";
         transform.header.stamp = stamp;
         transform.child_frame_id = "compass";
-        transform.transform.rotation = q_cg;
+        transform.transform.rotation = q;
         transform.transform.translation.x = 0.0;
         transform.transform.translation.y = 0.0;
         transform.transform.translation.z = 0.0;
