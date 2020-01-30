@@ -10,6 +10,7 @@
 #include <message_filters/synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
 #include <nav_msgs/Odometry.h>
+#include <geometry_msgs/PoseStamped.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <eigen_conversions/eigen_msg.h>
 #include <pcl_ros/point_cloud.h>
@@ -22,9 +23,9 @@ class ScanAggregator {
 
 public:
 
-    ScanAggregator() : nh_("~"), pc_sub_(nh_, "/puck/scan_transformed_corrected", 10),
-                       odom_sub_(nh_, "/odometry", 100),
-                       sync_(Policy(20), ScanAggregator::pc_sub_, ScanAggregator::odom_sub_) {
+    ScanAggregator() : nh_("~"), pc_sub_(nh_, "/scan", 1),
+                       odom_sub_(nh_, "/odometry", 10),
+                       sync_(Policy(10), ScanAggregator::pc_sub_, ScanAggregator::odom_sub_) {
         float duration;
         float scanner_frequency;
 
@@ -34,7 +35,8 @@ public:
         max_buffer_size_ = static_cast<int>(round(scanner_frequency * duration));
 
         sync_.registerCallback(boost::bind(&ScanAggregator::callback, this, _1, _2));
-        pub_ = nh_.advertise<sensor_msgs::PointCloud2>("aggregate_scan", 20);
+        cloud_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("aggregate_scan", 10);
+        keyframe_pub_ = nh_.advertise<geometry_msgs::PoseStamped>("keyframe", 10);
     }
 
     void callback(const PointCloud::ConstPtr &cloud_msg, const nav_msgs::Odometry::ConstPtr &odom_msg) {
@@ -63,7 +65,13 @@ public:
         cloud_out.header.stamp = odom_msg->header.stamp;
         // cloud_out.header.stamp = ros::Time::now();
         cloud_out.header.frame_id = cloud_msg->header.frame_id;
-        pub_.publish(cloud_out);
+        cloud_pub_.publish(cloud_out);
+
+        geometry_msgs::PoseStamped keyframe;
+        keyframe.header.stamp = odom_msg->header.stamp;
+        keyframe.header.frame_id = odom_msg->header.frame_id;
+        keyframe.pose = odom_msg->pose.pose;
+        keyframe_pub_.publish(keyframe);
 
         cloud_buffer_.clear();
 
@@ -77,7 +85,8 @@ private:
     message_filters::Subscriber<PointCloud> pc_sub_;
     message_filters::Subscriber<nav_msgs::Odometry> odom_sub_;
     message_filters::Synchronizer<Policy> sync_;
-    ros::Publisher pub_;
+    ros::Publisher cloud_pub_;
+    ros::Publisher keyframe_pub_;
 
     std::deque<std::tuple<PointCloud::Ptr, Eigen::Isometry3f>> cloud_buffer_;
 
