@@ -3,20 +3,22 @@
 //
 
 #include <ros/ros.h>
-#include <nav_msgs/Odometry.h>
 #include <geometry_msgs/Vector3.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/TransformStamped.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/synchronizer.h>
+#include <message_filters/sync_policies/exact_time.h>
 #include <message_filters/sync_policies/approximate_time.h>
 #include <eigen_conversions/eigen_msg.h>
 #include <pcl_ros/point_cloud.h>
-#include <tf/transform_broadcaster.h>
 
 #include <structural_compass/structural_compass.h>
 #include <structural_compass/PrincipalDirections.h>
 
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
-typedef message_filters::sync_policies::ApproximateTime<PointCloud, nav_msgs::Odometry> Policy;
+typedef message_filters::sync_policies::ApproximateTime<PointCloud, geometry_msgs::PoseStamped> Policy;
+// typedef message_filters::sync_policies::ExactTime<PointCloud, geometry_msgs::PoseStamped> Policy;
 
 template<typename Compass>
 class PointCloudCompassNode {
@@ -24,28 +26,43 @@ class PointCloudCompassNode {
 public:
 
     PointCloudCompassNode() : nh_("~"),
-                              pc_sub_(nh_, "/scan_aggregator/aggregate_scan", 1),
-                              odom_sub_(nh_, "/odometry", 500),
-                              pc_sync_(Policy(100), pc_sub_, odom_sub_) {
+                              pc_sub_(nh_, "/scan", 5),
+                              pose_sub_(nh_, "/pose", 5),
+                              pc_sync_(Policy(10), pc_sub_, pose_sub_) {
+
+        nh_.param<float>("frequency", frequency_, 10.0);
 
         compass_ = std::make_unique<Compass>();
         pc_sync_.registerCallback(boost::bind(&PointCloudCompassNode::callback, this, _1, _2));
         pd_pub_ = nh_.advertise<structural_compass::PrincipalDirections>("principal_directions", 10);
+        rot_pub_ = nh_.advertise<geometry_msgs::TransformStamped>("compass_transform", 10);
 
     }
 
-    void callback(const PointCloud::ConstPtr &cloud_msg, const nav_msgs::Odometry::ConstPtr &odom_msg) {
+    void loop() {
+        ros::Rate rate(frequency_);
+        while (ros::ok) {
+            ros::spinOnce();
+            rate.sleep();
+        }
+    }
+
+    void callback(const PointCloud::ConstPtr &cloud_msg, const geometry_msgs::PoseStamped::ConstPtr &pose_msg) {
 
         Eigen::Isometry3d G_ws;
-        tf::poseMsgToEigen(odom_msg->pose.pose, G_ws);
+        tf::poseMsgToEigen(pose_msg->pose, G_ws);
 
         Eigen::Vector3f gravity;
         gravity << -G_ws(2, 0), -G_ws(2, 1), -G_ws(2, 2);
 
-        Eigen::Matrix3f R_cs;
-        std::vector<Eigen::Vector3f> directions;
-        R_cs = compass_->principalDirections(*cloud_msg, gravity, directions);
-        publish(R_cs.transpose(), directions, odom_msg->header.stamp);
+        if (cloud_msg->header.seq != pose_msg->header.seq) {
+            ROS_ERROR("HERE");
+        }
+
+        // Eigen::Matrix3f R_cs;
+        // std::vector<Eigen::Vector3f> directions;
+        // R_cs = compass_->principalDirections(*cloud_msg, G_ws.cast<float>(), gravity, directions);
+        // publish(R_cs, directions, pose_msg->header.stamp);
 
     }
 
@@ -55,14 +72,14 @@ public:
         tf::quaternionEigenToMsg(Eigen::Quaternionf(R).cast<double>(), q);
 
         geometry_msgs::TransformStamped transform;
-        transform.header.frame_id = "vehicle";
+        transform.header.frame_id = "compass";
         transform.header.stamp = stamp;
-        transform.child_frame_id = "compass";
+        transform.child_frame_id = "vehicle";
         transform.transform.rotation = q;
         transform.transform.translation.x = 0.0;
         transform.transform.translation.y = 0.0;
         transform.transform.translation.z = 0.0;
-        tf_broadcaster_.sendTransform(transform);
+        rot_pub_.publish(transform);
 
         structural_compass::PrincipalDirections principal_directions;
         principal_directions.header.frame_id = "compass";
@@ -79,16 +96,16 @@ public:
 private:
 
     ros::NodeHandle nh_;
+    float frequency_;
 
     std::unique_ptr<Compass> compass_;
 
     message_filters::Subscriber<PointCloud> pc_sub_;
-    message_filters::Subscriber<nav_msgs::Odometry> odom_sub_;
+    message_filters::Subscriber<geometry_msgs::PoseStamped> pose_sub_;
     message_filters::Synchronizer<Policy> pc_sync_;
 
     ros::Publisher pd_pub_;
     ros::Publisher rot_pub_;
-    tf::TransformBroadcaster tf_broadcaster_;
 
 };
 
@@ -96,7 +113,8 @@ int main(int argc, char *argv[]) {
     ros::init(argc, argv, "point_cloud_compass_node");
 
     PointCloudCompassNode<structural_compass::EntropyCompass<PointCloud>> compass_node;
+    compass_node.loop();
 
-    ros::spin();
+    return 0;
 }
 

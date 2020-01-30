@@ -63,14 +63,17 @@ namespace structural_compass {
 
         EntropyCompass() : simple_kf_(0.0, M_PI / 6, 0.1 * (M_PI / 180.0), 1.0 * (M_PI / 180.0), M_PI_2) {}
         ~EntropyCompass() = default;
-        Eigen::Matrix3f principalDirections(const PointCloud &point_cloud, const Eigen::Vector3f &gravity,
+
+        Eigen::Matrix3f principalDirections(const PointCloud &point_cloud, const Eigen::Isometry3f &G_ws,
+                                            const Eigen::Vector3f &gravity,
                                             std::vector<Eigen::Vector3f> &directions);
 
     };
 
     template<typename PointCloud>
     Eigen::Matrix3f
-    EntropyCompass<PointCloud>::principalDirections(const PointCloud &point_cloud, const Eigen::Vector3f &gravity,
+    EntropyCompass<PointCloud>::principalDirections(const PointCloud &point_cloud, const Eigen::Isometry3f &G_ws,
+                                                    const Eigen::Vector3f &gravity,
                                                     std::vector<Eigen::Vector3f> &directions) {
 
         // initial gravity-aligned orthonormal bases

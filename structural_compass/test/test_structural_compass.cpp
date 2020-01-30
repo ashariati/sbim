@@ -97,10 +97,32 @@ TEST_CASE("Entropy Compass", "[EntropyCompass]") {
 
         Eigen::Matrix3f R;
         std::vector<Eigen::Vector3f> principal_directions;
-        R = compass.principalDirections(*cloud_ptr, gravity, principal_directions);
+        // R = compass.principalDirections(*cloud_ptr, gravity, principal_directions);
 
         // visualizeCloud(cloud_ptr);
 
     }
+}
+
+TEST_CASE("My Tests", "[Entropy Compass]") {
+
+    float angles[] = {0, M_PI_2, M_PI, 1.5 * M_PI, 2 * M_PI};
+
+    for (auto a : angles) {
+
+        Eigen::AngleAxisf ax = Eigen::AngleAxisf(a, Eigen::Vector3f::UnitZ());
+        Eigen::Isometry3f G = Eigen::Isometry3f::Identity();
+        G.rotate(ax);
+
+        Eigen::Matrix3f R = G.rotation();
+
+        Eigen::Vector3f ea = R.eulerAngles(2, 1, 0);
+
+        std::cout << R << std::endl;
+        std::cout << ea << std::endl;
+
+    }
+
+
 }
 

@@ -8,6 +8,7 @@ project(tf_publishers)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+        geometry_msgs
         nav_msgs
         roscpp
         rospy
@@ -138,6 +139,7 @@ include_directories(
 # add_executable(${PROJECT_NAME}_node src/tf_publishers_node.cpp)
 
 add_executable(odom_to_tf src/odom_to_tf.cpp)
+add_executable(pose_to_tf src/pose_to_tf.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -155,6 +157,10 @@ add_executable(odom_to_tf src/odom_to_tf.cpp)
 # )
 
 target_link_libraries(odom_to_tf
+        ${catkin_LIBRARIES}
+        )
+
+target_link_libraries(pose_to_tf
         ${catkin_LIBRARIES}
         )
 

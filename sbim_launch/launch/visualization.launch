@@ -1,0 +1,7 @@
+<launch>
+
+    <node pkg="tf_publishers" type="pose_to_tf" name="pose_to_tf">
+        <remap from="/keyframe" to="/scan_aggregator/keyframe"/>
+    </node>
+
+</launch>
