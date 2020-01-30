@@ -9,9 +9,8 @@
 #include <ros/ros.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <tf/transform_broadcaster.h>
-#include <geometry_msgs/TransformStamped.h>
 
-class OdomToTfNode {
+class TransformToTFNode {
 
 private:
     ros::NodeHandle nh_;
@@ -20,9 +19,9 @@ private:
 
 public:
 
-    OdomToTfNode() : nh_("~") {
-        sub_ = nh_.subscribe<geometry_msgs::PoseStamped>("/keyframe", 10,
-                                                         boost::bind(&OdomToTfNode::callback, this, _1));
+    TransformToTFNode() : nh_("~") {
+        sub_ = nh_.subscribe<geometry_msgs::PoseStamped>("/keyframe", 1,
+                                                         boost::bind(&TransformToTFNode::callback, this, _1));
     }
 
     void callback(const geometry_msgs::PoseStamped::ConstPtr &pose_msg) {
@@ -49,7 +48,7 @@ int main(int argc, char *argv[]) {
 
     ros::init(argc, argv, "pose_to_tf");
 
-    OdomToTfNode odom_to_tf_node;
+    TransformToTFNode pose_to_tf_node;
 
     ros::spin();
 

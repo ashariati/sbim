@@ -5,9 +5,8 @@
 #include <ros/ros.h>
 #include <nav_msgs/Odometry.h>
 #include <tf/transform_broadcaster.h>
-#include <geometry_msgs/TransformStamped.h>
 
-class OdomToTfNode {
+class TransformToTFNode {
 
 private:
     ros::NodeHandle nh_;
@@ -16,8 +15,8 @@ private:
 
 public:
 
-    OdomToTfNode() : nh_("~") {
-        sub_ = nh_.subscribe<nav_msgs::Odometry>("/odometry", 10, boost::bind(&OdomToTfNode::callback, this, _1));
+    TransformToTFNode() : nh_("~") {
+        sub_ = nh_.subscribe<nav_msgs::Odometry>("/odometry", 1, boost::bind(&TransformToTFNode::callback, this, _1));
     }
 
     void callback(const nav_msgs::Odometry::ConstPtr odom_msg) {
@@ -43,7 +42,7 @@ int main(int argc, char *argv[]) {
 
     ros::init(argc, argv, "odom_to_tf");
 
-    OdomToTfNode odom_to_tf_node;
+    TransformToTFNode odom_to_tf_node;
 
     ros::spin();
 

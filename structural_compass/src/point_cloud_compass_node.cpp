@@ -26,8 +26,8 @@ class PointCloudCompassNode {
 public:
 
     PointCloudCompassNode() : nh_("~"),
-                              pc_sub_(nh_, "/scan", 5),
-                              pose_sub_(nh_, "/pose", 5),
+                              pc_sub_(nh_, "/scan", 1),
+                              pose_sub_(nh_, "/pose", 1),
                               pc_sync_(Policy(10), pc_sub_, pose_sub_) {
 
         nh_.param<float>("frequency", frequency_, 10.0);
@@ -40,29 +40,31 @@ public:
     }
 
     void loop() {
+
         ros::Rate rate(frequency_);
-        while (ros::ok) {
+        while (ros::ok()) {
+
+            Eigen::Isometry3d G_ws = G_ws_;
+
+            Eigen::Vector3f gravity;
+            gravity << -G_ws(2, 0), -G_ws(2, 1), -G_ws(2, 2);
+
+            Eigen::Matrix3f R_cs;
+            std::vector<Eigen::Vector3f> directions;
+            R_cs = compass_->principalDirections(P_s_, G_ws.cast<float>().rotation(), gravity, directions);
+
+            publish(R_cs, directions, ros::Time::now());
+
             ros::spinOnce();
             rate.sleep();
+
         }
     }
 
     void callback(const PointCloud::ConstPtr &cloud_msg, const geometry_msgs::PoseStamped::ConstPtr &pose_msg) {
 
-        Eigen::Isometry3d G_ws;
-        tf::poseMsgToEigen(pose_msg->pose, G_ws);
-
-        Eigen::Vector3f gravity;
-        gravity << -G_ws(2, 0), -G_ws(2, 1), -G_ws(2, 2);
-
-        if (cloud_msg->header.seq != pose_msg->header.seq) {
-            ROS_ERROR("HERE");
-        }
-
-        // Eigen::Matrix3f R_cs;
-        // std::vector<Eigen::Vector3f> directions;
-        // R_cs = compass_->principalDirections(*cloud_msg, G_ws.cast<float>(), gravity, directions);
-        // publish(R_cs, directions, pose_msg->header.stamp);
+        tf::poseMsgToEigen(pose_msg->pose, G_ws_);
+        P_s_ = *cloud_msg;
 
     }
 
@@ -97,6 +99,9 @@ private:
 
     ros::NodeHandle nh_;
     float frequency_;
+
+    Eigen::Isometry3d G_ws_;
+    PointCloud P_s_;
 
     std::unique_ptr<Compass> compass_;
 

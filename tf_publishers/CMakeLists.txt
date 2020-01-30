@@ -140,6 +140,7 @@ include_directories(
 
 add_executable(odom_to_tf src/odom_to_tf.cpp)
 add_executable(pose_to_tf src/pose_to_tf.cpp)
+add_executable(transform_to_tf src/transform_to_tf.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -161,6 +162,10 @@ target_link_libraries(odom_to_tf
         )
 
 target_link_libraries(pose_to_tf
+        ${catkin_LIBRARIES}
+        )
+
+target_link_libraries(transform_to_tf
         ${catkin_LIBRARIES}
         )
 

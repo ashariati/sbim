@@ -19,11 +19,13 @@ namespace structural_compass {
 
     private:
 
-        std::vector<float> searchSpace() const;
-        float cloudEntropy(const PointCloud &point_cloud) const;
-        float histogramEntropy(Eigen::ArrayXf &histogram) const;
+        bool is_initialized_;
 
-        class SimpleKF {
+        Eigen::Matrix3f R_ws_;
+        Eigen::Matrix3f R_sg_;
+        Eigen::Matrix3f R_cg_;
+
+        class YawTracker {
 
             float r_;
             float q_;
@@ -31,40 +33,55 @@ namespace structural_compass {
             float sigma_max_;
 
         public:
-            float mu_;
+            float theta_;
             float sigma_;
 
-            SimpleKF() = delete;
+            YawTracker() = delete;
 
-            SimpleKF(float mu, float sigma, float r, float q, float sigma_max = std::numeric_limits<float>::max()) {
-                mu_ = mu;
+            YawTracker(float mu, float sigma, float r, float q, float sigma_max = std::numeric_limits<float>::max()) {
+                theta_ = mu;
                 sigma_ = sigma;
                 r_ = r;
                 q_ = q;
                 sigma_max_ = sigma_max;
             }
 
-            ~SimpleKF() = default;
+            ~YawTracker() = default;
 
-            void predict() {
+            void predict(float dtheta) {
+                theta_ = theta_ + dtheta;
                 sigma_ = sigma_ + r_;
                 sigma_ = std::min(sigma_, sigma_max_);
             }
 
-            void update(float x) {
+            void update(float theta) {
                 float K = sigma_ / (sigma_ + q_);
-                mu_ = mu_ + K * (x - mu_);
+                theta_ = theta_ + K * (theta - theta_);
                 sigma_ = (1 - K) * sigma_;
             }
 
-        } simple_kf_;
+        } yaw_tracker_;
+
+        std::vector<float> searchSpace(float theta, float radius, const int num_samples = 60) const;
+        float cloudEntropy(const PointCloud &point_cloud) const;
+        float histogramEntropy(Eigen::ArrayXf &histogram) const;
+
+        Eigen::Matrix3f gravityAlignedFrame(const Eigen::Vector3f &gravity) const;
+
+        float zAxisRotationToYaw(const Eigen::Matrix3f &R_z) const;
+
+        Eigen::Matrix3f minEntropySearch(const PointCloud &P_g, const std::vector<float> &search_space) const;
+
 
     public:
 
-        EntropyCompass() : simple_kf_(0.0, M_PI / 6, 0.1 * (M_PI / 180.0), 1.0 * (M_PI / 180.0), M_PI_2) {}
+        EntropyCompass() : yaw_tracker_(0.0, M_PI_4, 0.1 * (M_PI / 180.0), 1.0 * (M_PI / 180.0), M_PI_4) {
+            is_initialized_ = false;
+        }
+
         ~EntropyCompass() = default;
 
-        Eigen::Matrix3f principalDirections(const PointCloud &point_cloud, const Eigen::Isometry3f &G_ws,
+        Eigen::Matrix3f principalDirections(const PointCloud &point_cloud, const Eigen::Matrix3f &R_ws,
                                             const Eigen::Vector3f &gravity,
                                             std::vector<Eigen::Vector3f> &directions);
 
@@ -72,66 +89,64 @@ namespace structural_compass {
 
     template<typename PointCloud>
     Eigen::Matrix3f
-    EntropyCompass<PointCloud>::principalDirections(const PointCloud &point_cloud, const Eigen::Isometry3f &G_ws,
+    EntropyCompass<PointCloud>::principalDirections(const PointCloud &point_cloud, const Eigen::Matrix3f &R_ws,
                                                     const Eigen::Vector3f &gravity,
                                                     std::vector<Eigen::Vector3f> &directions) {
 
-        // initial gravity-aligned orthonormal bases
-        Eigen::Vector3f v3 = -gravity.normalized();
-        Eigen::Vector3f v1;
-        v1 << -v3[1], v3[0], 0.0;
-        Eigen::Vector3f v2;
-        v2 = v3.cross(v1);
-        Eigen::Matrix4f M;
-        M << v1[0], v2[0], v3[0], 0,
-                v1[1], v2[1], v3[1], 0,
-                v1[2], v2[2], v3[2], 0,
-                0, 0, 0, 1;
-        Eigen::Isometry3f G_sg(M);
+        // intermediary gravity-aligned frame
+        Eigen::Matrix3f R_sg = gravityAlignedFrame(gravity);
 
+        // transform point cloud to gravity-aligned frame
+        Eigen::Isometry3f G_gs = Eigen::Isometry3f::Identity();
+        G_gs.rotate(R_sg.transpose());
         PointCloud P_g;
-        pcl::transformPointCloud(point_cloud, P_g, G_sg.inverse());
+        pcl::transformPointCloud(point_cloud, P_g, G_gs);
 
-        // find entropy-minimizing rotational correction
-        PointCloud P_c;
-        Eigen::Isometry3f R_cg = Eigen::Isometry3f::Identity();
-        std::vector<float> objective;
-        auto search_space = searchSpace(); // NOTE: ERROR -- This search space is w.r.t the arbitrary G_sg starting point..
-        for (auto theta_cg : search_space) {
-            R_cg.rotate(Eigen::AngleAxisf(theta_cg, Eigen::Vector3f::UnitZ()));
-            pcl::transformPointCloud(P_g, P_c, R_cg);
-            objective.push_back(cloudEntropy(P_c));
+        if (is_initialized_) {
+
+            // rotation from current sensor frame to last sensor frame
+            Eigen::Matrix3f R_ss = R_ws_.transpose() * R_ws;
+
+            // rotation from current to last gravity-aligned frame
+            Eigen::Matrix3f R_gg = R_sg_.transpose() * R_ss * R_sg;
+
+            // predict current compass orientation w.r.t. current gravity-aligned frame
+            Eigen::Matrix3f R_cg_hat = R_cg_ * R_gg;
+            auto theta_hat = zAxisRotationToYaw(R_cg_hat);
+            yaw_tracker_.predict(theta_hat - yaw_tracker_.theta_);
+
         }
-        int opt_index = std::distance(objective.begin(), std::min_element(objective.begin(), objective.end()));
-        float theta_cg_opt = search_space[opt_index];
 
-        // directions.push_back(v3);
-        // directions.push_back(v2);
-        // directions.push_back(v1);
+        // search for true compass orientation around estimate
+        auto search_space = searchSpace(yaw_tracker_.theta_, 2 * yaw_tracker_.sigma_);
+        Eigen::Matrix3f R_cg = minEntropySearch(P_g, search_space);
 
-        Eigen::Isometry3f G_cg = Eigen::Isometry3f::Identity();
-        G_cg.rotate(Eigen::AngleAxisf(theta_cg_opt, Eigen::Vector3f::UnitZ()));
-        Eigen::Isometry3f G_cs = (G_cg * G_sg.inverse());
+        // save results for next iteration
+        auto theta = zAxisRotationToYaw(R_cg);
+        yaw_tracker_.update(theta);
+        R_ws_ = R_ws;
+        R_sg_ = R_sg;
+        R_cg_ = R_cg;
 
-        return G_cs.rotation();
+
+        // // directions.push_back(v3);
+        // // directions.push_back(v2);
+        // // directions.push_back(v1);
+
+        return R_cg * R_sg.transpose();
 
     }
 
     template<typename PointCloud>
-    std::vector<float> EntropyCompass<PointCloud>::searchSpace() const {
+    std::vector<float> EntropyCompass<PointCloud>::searchSpace(float theta, float radius, const int num_samples) const {
 
-        const int kNumSamples = 60;
-
-        // float start = -M_PI_2;
-        // float stop = M_PI_2;
-        // float step = 3.0 * (M_PI / 180.0);
-        float start = simple_kf_.mu_ - (3 * simple_kf_.sigma_);
-        float stop = simple_kf_.mu_ + (3 * simple_kf_.sigma_);
-        float step = (stop - start) / kNumSamples;
+        float start = theta - radius;
+        float stop = theta + radius;
+        float step = (stop - start) / num_samples;
 
         std::vector<float> arange;
         float val = start;
-        for (int i = 0; i <= kNumSamples; ++i) {
+        for (int i = 0; i <= num_samples; ++i) {
             arange.push_back(val);
             val += step;
         }
@@ -189,6 +204,50 @@ namespace structural_compass {
         Eigen::ArrayXf logp = p.log();
         logp = logp.isFinite().select(logp, 0);
         return -(p * logp).sum();
+    }
+
+    template<typename PointCloud>
+    Eigen::Matrix3f EntropyCompass<PointCloud>::gravityAlignedFrame(const Eigen::Vector3f &gravity) const {
+
+        Eigen::Vector3f v3 = -gravity.normalized();
+        Eigen::Vector3f v1;
+        v1 << -v3[1], v3[0], 0.0;
+        Eigen::Vector3f v2;
+        v2 = v3.cross(v1);
+        Eigen::Matrix3f R_sg;
+        R_sg << v1[0], v2[0], v3[0],
+                v1[1], v2[1], v3[1],
+                v1[2], v2[2], v3[2];
+
+        return R_sg;
+    }
+
+    template<typename PointCloud>
+    float EntropyCompass<PointCloud>::zAxisRotationToYaw(const Eigen::Matrix3f &R_z) const {
+        return std::asin(R_z(0, 0));
+    }
+
+    template<typename PointCloud>
+    Eigen::Matrix3f
+    EntropyCompass<PointCloud>::minEntropySearch(const PointCloud &P_g, const std::vector<float> &search_space) const {
+
+        // find entropy-minimizing rotational correction
+        PointCloud P_c;
+        std::vector<float> objective;
+        for (auto theta_cg : search_space) {
+
+            Eigen::Isometry3f G_cg = Eigen::Isometry3f::Identity();
+            G_cg.rotate(Eigen::AngleAxisf(theta_cg, Eigen::Vector3f::UnitZ()));
+
+            pcl::transformPointCloud(P_g, P_c, G_cg);
+            objective.push_back(cloudEntropy(P_c));
+        }
+        int opt_index = std::distance(objective.begin(), std::min_element(objective.begin(), objective.end()));
+        float theta_cg_opt = search_space[opt_index];
+
+        Eigen::Matrix3f R_cg_opt = Eigen::AngleAxisf(theta_cg_opt, Eigen::Vector3f::UnitZ()).toRotationMatrix();
+
+        return R_cg_opt;
     }
 
 }

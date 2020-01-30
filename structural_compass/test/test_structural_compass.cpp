@@ -67,14 +67,14 @@ TEST_CASE("Entropy Compass Utilities", "[EntropyCompass]") {
 
     }
 
-    SECTION("print search space") {
-        auto search_space = compass.searchSpace();
-        std::cout << "search space size: " << search_space.size() << std::endl;
-        for (auto s : search_space) {
-            std::cout << s << ", ";
-        }
-        std::cout << std::endl;
-    }
+    // SECTION("print search space") {
+    //     auto search_space = compass.searchSpace();
+    //     std::cout << "search space size: " << search_space.size() << std::endl;
+    //     for (auto s : search_space) {
+    //         std::cout << s << ", ";
+    //     }
+    //     std::cout << std::endl;
+    // }
 
 }
 
@@ -104,22 +104,23 @@ TEST_CASE("Entropy Compass", "[EntropyCompass]") {
     }
 }
 
-TEST_CASE("My Tests", "[Entropy Compass]") {
+TEST_CASE("My Angle Experiments", "[My Experiments]") {
 
-    float angles[] = {0, M_PI_2, M_PI, 1.5 * M_PI, 2 * M_PI};
+    float angles[] = {-M_PI, -3 * M_PI_4, -M_PI_2, -M_PI_4, 0, M_PI_4, M_PI_2, 3 * M_PI_4, M_PI};
 
     for (auto a : angles) {
 
         Eigen::AngleAxisf ax = Eigen::AngleAxisf(a, Eigen::Vector3f::UnitZ());
-        Eigen::Isometry3f G = Eigen::Isometry3f::Identity();
-        G.rotate(ax);
 
-        Eigen::Matrix3f R = G.rotation();
+        Eigen::Matrix3f R = ax.toRotationMatrix();
 
         Eigen::Vector3f ea = R.eulerAngles(2, 1, 0);
 
-        std::cout << R << std::endl;
-        std::cout << ea << std::endl;
+        std::cout << "true angle: " << a << std::endl;
+        std::cout << "euler angles: " << ea.transpose() << std::endl;
+        std::cout << "acos: " << std::acos(R(0, 0)) << std::endl;
+        std::cout << "asin: " << std::asin(R(1, 0)) << std::endl;
+        std::cout << std::endl;
 
     }
 

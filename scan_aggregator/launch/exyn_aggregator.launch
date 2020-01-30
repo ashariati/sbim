@@ -2,7 +2,7 @@
 
     <node pkg="scan_aggregator" type="scan_aggregator" name="scan_aggregator" output="screen">
         <remap from="/scan" to="/puck/scan_transformed_corrected" />
-        <param name="duration" value="0.1" />
+        <param name="duration" value="0.2" />
     </node>
 
 </launch>
