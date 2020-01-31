@@ -22,7 +22,7 @@ namespace structural_compass {
         bool is_initialized_;
 
         Eigen::Matrix3f R_ws_;
-        Eigen::Matrix3f R_sg_;
+        Eigen::Matrix3f R_gs_;
         Eigen::Matrix3f R_cg_;
 
         class YawTracker {
@@ -94,11 +94,11 @@ namespace structural_compass {
                                                     std::vector<Eigen::Vector3f> &directions) {
 
         // intermediary gravity-aligned frame
-        Eigen::Matrix3f R_sg = gravityAlignedFrame(gravity);
+        Eigen::Matrix3f R_gs = gravityAlignedFrame(gravity);
 
         // transform point cloud to gravity-aligned frame
         Eigen::Isometry3f G_gs = Eigen::Isometry3f::Identity();
-        G_gs.rotate(R_sg.transpose());
+        G_gs.rotate(R_gs);
         PointCloud P_g;
         pcl::transformPointCloud(point_cloud, P_g, G_gs);
 
@@ -108,13 +108,15 @@ namespace structural_compass {
             Eigen::Matrix3f R_ss = R_ws_.transpose() * R_ws;
 
             // rotation from current to last gravity-aligned frame
-            Eigen::Matrix3f R_gg = R_sg_.transpose() * R_ss * R_sg;
+            Eigen::Matrix3f R_gg = R_gs_ * R_ss * R_gs.transpose();
 
             // predict current compass orientation w.r.t. current gravity-aligned frame
             Eigen::Matrix3f R_cg_hat = R_cg_ * R_gg;
             auto theta_hat = zAxisRotationToYaw(R_cg_hat);
             yaw_tracker_.predict(theta_hat - yaw_tracker_.theta_);
 
+        } else {
+            is_initialized_ = true;
         }
 
         // search for true compass orientation around estimate
@@ -125,7 +127,7 @@ namespace structural_compass {
         auto theta = zAxisRotationToYaw(R_cg);
         yaw_tracker_.update(theta);
         R_ws_ = R_ws;
-        R_sg_ = R_sg;
+        R_gs_ = R_gs;
         R_cg_ = R_cg;
 
 
@@ -133,7 +135,7 @@ namespace structural_compass {
         // // directions.push_back(v2);
         // // directions.push_back(v1);
 
-        return R_cg * R_sg.transpose();
+        return R_cg * R_gs;
 
     }
 
@@ -209,22 +211,22 @@ namespace structural_compass {
     template<typename PointCloud>
     Eigen::Matrix3f EntropyCompass<PointCloud>::gravityAlignedFrame(const Eigen::Vector3f &gravity) const {
 
-        Eigen::Vector3f v3 = -gravity.normalized();
+        Eigen::Vector3f v3 = -gravity;
         Eigen::Vector3f v1;
-        v1 << -v3[1], v3[0], 0.0;
+        v1 << v3[2], 0.0, -v3[0];
         Eigen::Vector3f v2;
         v2 = v3.cross(v1);
-        Eigen::Matrix3f R_sg;
-        R_sg << v1[0], v2[0], v3[0],
-                v1[1], v2[1], v3[1],
-                v1[2], v2[2], v3[2];
+        Eigen::Matrix3f R_gs;
+        R_gs << v1[0], v1[1], v1[2],
+                v2[0], v2[1], v2[2],
+                v3[0], v3[1], v3[2];
 
-        return R_sg;
+        return R_gs;
     }
 
     template<typename PointCloud>
     float EntropyCompass<PointCloud>::zAxisRotationToYaw(const Eigen::Matrix3f &R_z) const {
-        return std::asin(R_z(0, 0));
+        return std::atan2(R_z(1, 0), R_z(0, 0));
     }
 
     template<typename PointCloud>

@@ -120,6 +120,7 @@ TEST_CASE("My Angle Experiments", "[My Experiments]") {
         std::cout << "euler angles: " << ea.transpose() << std::endl;
         std::cout << "acos: " << std::acos(R(0, 0)) << std::endl;
         std::cout << "asin: " << std::asin(R(1, 0)) << std::endl;
+        std::cout << "atan2: " << std::atan2(R(1, 0), R(0, 0)) << std::endl;
         std::cout << std::endl;
 
     }

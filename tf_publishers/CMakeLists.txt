@@ -8,12 +8,16 @@ project(tf_publishers)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+        message_filters
+        eigen_conversions
         geometry_msgs
         nav_msgs
+        tf2
+        tf2_ros
+        tf2_geometry_msgs
         roscpp
         rospy
         std_msgs
-        tf
         )
 
 ## System dependencies are found with CMake's conventions
@@ -141,6 +145,7 @@ include_directories(
 add_executable(odom_to_tf src/odom_to_tf.cpp)
 add_executable(pose_to_tf src/pose_to_tf.cpp)
 add_executable(transform_to_tf src/transform_to_tf.cpp)
+add_executable(compass_to_tf src/compass_to_tf.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -166,6 +171,10 @@ target_link_libraries(pose_to_tf
         )
 
 target_link_libraries(transform_to_tf
+        ${catkin_LIBRARIES}
+        )
+
+target_link_libraries(compass_to_tf
         ${catkin_LIBRARIES}
         )
 

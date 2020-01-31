@@ -8,20 +8,20 @@
 
 #include <ros/ros.h>
 #include <geometry_msgs/PoseStamped.h>
-#include <tf/transform_broadcaster.h>
+#include <tf2_ros/transform_broadcaster.h>
 
-class TransformToTFNode {
+class PoseToTFNode {
 
 private:
     ros::NodeHandle nh_;
     ros::Subscriber sub_;
-    tf::TransformBroadcaster tf_broadcaster_;
+    tf2_ros::TransformBroadcaster tf_broadcaster_;
 
 public:
 
-    TransformToTFNode() : nh_("~") {
+    PoseToTFNode() : nh_("~") {
         sub_ = nh_.subscribe<geometry_msgs::PoseStamped>("/keyframe", 1,
-                                                         boost::bind(&TransformToTFNode::callback, this, _1));
+                                                         boost::bind(&PoseToTFNode::callback, this, _1));
     }
 
     void callback(const geometry_msgs::PoseStamped::ConstPtr &pose_msg) {
@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
 
     ros::init(argc, argv, "pose_to_tf");
 
-    TransformToTFNode pose_to_tf_node;
+    PoseToTFNode pose_to_tf_node;
 
     ros::spin();
 

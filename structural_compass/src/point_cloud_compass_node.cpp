@@ -31,6 +31,7 @@ public:
                               pc_sync_(Policy(10), pc_sub_, pose_sub_) {
 
         nh_.param<float>("frequency", frequency_, 10.0);
+        nh_.param<int>("queue_size", queue_size_, 1);
 
         compass_ = std::make_unique<Compass>();
         pc_sync_.registerCallback(boost::bind(&PointCloudCompassNode::callback, this, _1, _2));
@@ -44,43 +45,55 @@ public:
         ros::Rate rate(frequency_);
         while (ros::ok()) {
 
-            Eigen::Isometry3d G_ws = G_ws_;
+            rate.sleep();
+            ros::spinOnce();
+
+            if (message_queue_.size() < 1) {
+                continue;
+            }
+
+            auto message = message_queue_.front();
+            message_queue_.pop_front();
+
+            PointCloud P_s = std::get<0>(message);
+
+            geometry_msgs::PoseStamped pose_msg = std::get<1>(message);
+            Eigen::Isometry3d G_ws;
+            tf::poseMsgToEigen(pose_msg.pose, G_ws);
+            Eigen::Matrix3f R_ws = G_ws.rotation().cast<float>();
 
             Eigen::Vector3f gravity;
-            gravity << -G_ws(2, 0), -G_ws(2, 1), -G_ws(2, 2);
+            gravity << -R_ws(2, 0), -R_ws(2, 1), -R_ws(2, 2);
 
             Eigen::Matrix3f R_cs;
             std::vector<Eigen::Vector3f> directions;
-            R_cs = compass_->principalDirections(P_s_, G_ws.cast<float>().rotation(), gravity, directions);
+            R_cs = compass_->principalDirections(P_s, R_ws, gravity, directions);
 
-            publish(R_cs, directions, ros::Time::now());
-
-            ros::spinOnce();
-            rate.sleep();
+            publish(R_cs, directions, pose_msg.header.stamp);
 
         }
     }
 
     void callback(const PointCloud::ConstPtr &cloud_msg, const geometry_msgs::PoseStamped::ConstPtr &pose_msg) {
 
-        tf::poseMsgToEigen(pose_msg->pose, G_ws_);
-        P_s_ = *cloud_msg;
+        message_queue_.emplace_back(*cloud_msg, *pose_msg);
+
+        while (message_queue_.size() > queue_size_) {
+            message_queue_.pop_front();
+        }
 
     }
 
     void publish(const Eigen::Matrix3f &R, const std::vector<Eigen::Vector3f> &directions, const ros::Time stamp) {
 
-        geometry_msgs::Quaternion q;
-        tf::quaternionEigenToMsg(Eigen::Quaternionf(R).cast<double>(), q);
+        Eigen::Isometry3f G = Eigen::Isometry3f::Identity();
+        G.rotate(R);
 
         geometry_msgs::TransformStamped transform;
         transform.header.frame_id = "compass";
         transform.header.stamp = stamp;
         transform.child_frame_id = "vehicle";
-        transform.transform.rotation = q;
-        transform.transform.translation.x = 0.0;
-        transform.transform.translation.y = 0.0;
-        transform.transform.translation.z = 0.0;
+        tf::transformEigenToMsg(G.cast<double>(), transform.transform);
         rot_pub_.publish(transform);
 
         structural_compass::PrincipalDirections principal_directions;
@@ -99,9 +112,9 @@ private:
 
     ros::NodeHandle nh_;
     float frequency_;
+    int queue_size_;
 
-    Eigen::Isometry3d G_ws_;
-    PointCloud P_s_;
+    std::deque<std::tuple<PointCloud, geometry_msgs::PoseStamped>> message_queue_;
 
     std::unique_ptr<Compass> compass_;
 

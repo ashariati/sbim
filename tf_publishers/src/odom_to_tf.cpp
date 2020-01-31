@@ -4,19 +4,19 @@
 
 #include <ros/ros.h>
 #include <nav_msgs/Odometry.h>
-#include <tf/transform_broadcaster.h>
+#include <tf2_ros/transform_broadcaster.h>
 
-class TransformToTFNode {
+class OdomToTFNode {
 
 private:
     ros::NodeHandle nh_;
     ros::Subscriber sub_;
-    tf::TransformBroadcaster tf_broadcaster_;
+    tf2_ros::TransformBroadcaster tf_broadcaster_;
 
 public:
 
-    TransformToTFNode() : nh_("~") {
-        sub_ = nh_.subscribe<nav_msgs::Odometry>("/odometry", 1, boost::bind(&TransformToTFNode::callback, this, _1));
+    OdomToTFNode() : nh_("~") {
+        sub_ = nh_.subscribe<nav_msgs::Odometry>("/odometry", 1, boost::bind(&OdomToTFNode::callback, this, _1));
     }
 
     void callback(const nav_msgs::Odometry::ConstPtr odom_msg) {
@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
 
     ros::init(argc, argv, "odom_to_tf");
 
-    TransformToTFNode odom_to_tf_node;
+    OdomToTFNode odom_to_tf_node;
 
     ros::spin();
 

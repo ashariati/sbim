@@ -53,14 +53,14 @@ public:
 
             // ROS_INFO("Queue size = %d", static_cast<int>(cloud_buffer_.size()));
 
-            auto G0 = std::get<1>(cloud_buffer_.back());
-            auto G_inv = G0.inverse();
+            Eigen::Isometry3d G0 = std::get<1>(cloud_buffer_.back());
+            Eigen::Isometry3d G_inv = G0.inverse();
             PointCloud vehicle_aggregate_cloud;
             for (auto &e : cloud_buffer_) {
                 PointCloud c;
                 auto ci = std::get<0>(e);
-                auto Gi = std::get<1>(e);
-                pcl::transformPointCloud(*ci, c, G_inv * Gi);
+                Eigen::Isometry3d Gi = std::get<1>(e);
+                pcl::transformPointCloud(*ci, c, (G_inv * Gi).cast<float>());
                 vehicle_aggregate_cloud += c;
             }
 
@@ -74,7 +74,7 @@ public:
             geometry_msgs::PoseStamped keyframe;
             keyframe.header.stamp = now;
             keyframe.header.frame_id = pose_frame_id_;
-            tf::poseEigenToMsg(G0.cast<double>(), keyframe.pose);
+            tf::poseEigenToMsg(G0, keyframe.pose);
 
             cloud_pub_.publish(cloud_out);
             keyframe_pub_.publish(keyframe);
@@ -108,7 +108,7 @@ private:
     ros::Publisher cloud_pub_;
     ros::Publisher keyframe_pub_;
 
-    std::deque<std::tuple<PointCloud::Ptr, Eigen::Isometry3f>> cloud_buffer_;
+    std::deque<std::tuple<PointCloud::Ptr, Eigen::Isometry3d>> cloud_buffer_;
 
 };
 

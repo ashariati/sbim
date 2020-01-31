@@ -3,8 +3,10 @@
 //
 
 #include <ros/ros.h>
-#include <tf/transform_broadcaster.h>
+#include <tf2_ros/transform_broadcaster.h>
 #include <geometry_msgs/TransformStamped.h>
+#include <eigen_conversions/eigen_msg.h>
+#include <eigen3/Eigen/Dense>
 
 class TransformToTFNode {
 
@@ -12,7 +14,7 @@ private:
     ros::NodeHandle nh_;
     ros::Subscriber sub_;
     bool flip_transform_;
-    tf::TransformBroadcaster tf_broadcaster_;
+    tf2_ros::TransformBroadcaster tf_broadcaster_;
 
 public:
 
@@ -25,20 +27,28 @@ public:
 
     void callback(const geometry_msgs::TransformStamped::ConstPtr &transform_msg) {
 
+        Eigen::Isometry3d G;
+        tf::transformMsgToEigen(transform_msg->transform, G);
+
         geometry_msgs::TransformStamped transform;
+        transform.header.stamp = transform_msg->header.stamp;
+        // transform.header.stamp = ros::Time::now();
+
         if (flip_transform_) {
+            G = G.inverse();
+
+            transform.header.frame_id = transform_msg->child_frame_id;
+            transform.child_frame_id = transform_msg->header.frame_id;
+
+        } else {
+
+            transform.header.frame_id = transform_msg->header.frame_id;
+            transform.child_frame_id = transform_msg->child_frame_id;
 
         }
 
-        // transform.header.stamp = pose_msg->header.stamp;
-        // // transform.header.stamp = ros::Time::now();
-        // transform.header.frame_id = pose_msg->header.frame_id;
-        // transform.child_frame_id = "vehicle";
+        tf::transformEigenToMsg(G, transform.transform);
 
-        // transform.transform.rotation = pose_msg->pose.orientation;
-        // transform.transform.translation.x = pose_msg->pose.position.x;
-        // transform.transform.translation.y = pose_msg->pose.position.y;
-        // transform.transform.translation.z = pose_msg->pose.position.z;
 
         tf_broadcaster_.sendTransform(transform);
 
@@ -49,7 +59,7 @@ public:
 
 int main(int argc, char *argv[]) {
 
-    ros::init(argc, argv, "pose_to_tf");
+    ros::init(argc, argv, "transform_to_tf");
 
     TransformToTFNode transform_to_tf_node;
 
