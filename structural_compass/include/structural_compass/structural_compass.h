@@ -159,9 +159,11 @@ namespace structural_compass {
     template<typename PointCloud>
     float EntropyCompass<PointCloud>::cloudEntropy(const PointCloud &point_cloud) const {
 
-        const long kNumBins = 100;
+        const long kNumBins = 400;
+        const float kRadius = 10.0;
+        const float kBinWidth = (2 * kRadius) / kNumBins;
 
-        Eigen::ArrayXf e_data = Eigen::ArrayXf::LinSpaced(kNumBins + 1, -10.0, 10.0);
+        Eigen::ArrayXf e_data = Eigen::ArrayXf::LinSpaced(kNumBins + 1, -kRadius, kRadius);
         std::vector<float> edges = std::vector<float>(e_data.data(), e_data.data() + e_data.size());
 
         Eigen::ArrayXf x_bins = Eigen::ArrayXf::Zero(edges.size() - 1);
@@ -172,21 +174,23 @@ namespace structural_compass {
             if (!pcl_isfinite(p.x) || !pcl_isfinite(p.y))
                 continue;
 
-            int first_x_greater = std::distance(edges.begin(), std::lower_bound(edges.begin(), edges.end(), p.x));
-            int first_y_greater = std::distance(edges.begin(), std::lower_bound(edges.begin(), edges.end(), p.y));
+            float x_distance = (p.x - (-kRadius));
+            float y_distance = (p.y - (-kRadius));
 
-            bool out_of_range_x = ((first_x_greater == 0) ||
-                                   ((first_x_greater == edges.size()) && p.x > edges[first_x_greater]));
-            bool out_of_range_y = ((first_y_greater == 0) ||
-                                   ((first_y_greater == edges.size()) && p.y > edges[first_y_greater]));
-
-            if (!out_of_range_x) {
-                x_bins[first_x_greater - 1]++;
+            if (x_distance < 0 || y_distance < 0) {
+                continue;
             }
 
-            if (!out_of_range_y) {
-                y_bins[first_y_greater - 1]++;
+            int x_index = static_cast<int>(x_distance / kBinWidth);
+            int y_index = static_cast<int>(y_distance / kBinWidth);
+
+            if (x_index >= x_bins.size() || y_index >= y_bins.size()) {
+                continue;
             }
+
+            x_bins[x_index] += 1;
+            y_bins[y_index] += 1;
+
 
         }
 
