@@ -212,10 +212,16 @@ namespace structural_compass {
     Eigen::Matrix3f EntropyCompass<PointCloud>::gravityAlignedFrame(const Eigen::Vector3f &gravity) const {
 
         Eigen::Vector3f v3 = -gravity;
+        v3 = v3.normalized();
+
         Eigen::Vector3f v1;
         v1 << v3[2], 0.0, -v3[0];
+        v1 = v1.normalized();
+
         Eigen::Vector3f v2;
         v2 = v3.cross(v1);
+        v2 = v2.normalized();
+
         Eigen::Matrix3f R_gs;
         R_gs << v1[0], v1[1], v1[2],
                 v2[0], v2[1], v2[2],
