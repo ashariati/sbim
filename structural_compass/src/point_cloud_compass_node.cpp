@@ -37,6 +37,7 @@ public:
         pc_sync_.registerCallback(boost::bind(&PointCloudCompassNode::callback, this, _1, _2));
         pd_pub_ = nh_.advertise<sbim_msgs::PrincipalDirections>("principal_directions", 10);
         rot_pub_ = nh_.advertise<geometry_msgs::TransformStamped>("compass_transform", 10);
+        pc_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("transformed_scan", 10);
 
     }
 
@@ -69,7 +70,13 @@ public:
             std::vector<Eigen::Vector3f> directions;
             R_cs = compass_->principalDirections(P_s, R_ws, gravity, directions);
 
-            publish(R_cs, directions, pose_msg.header.stamp);
+            Eigen::Isometry3f G_cs = Eigen::Isometry3f::Identity();
+            G_cs.rotate(R_cs);
+
+            PointCloud P_c;
+            pcl::transformPointCloud(P_s, P_c, G_cs);
+
+            publish(P_c, R_cs, directions, pose_msg.header.stamp);
 
         }
     }
@@ -84,7 +91,8 @@ public:
 
     }
 
-    void publish(const Eigen::Matrix3f &R, const std::vector<Eigen::Vector3f> &directions, const ros::Time stamp) {
+    void publish(const PointCloud &P, const Eigen::Matrix3f &R, const std::vector<Eigen::Vector3f> &directions,
+                 const ros::Time stamp) {
 
         Eigen::Isometry3f G = Eigen::Isometry3f::Identity();
         G.rotate(R);
@@ -106,6 +114,13 @@ public:
         }
         pd_pub_.publish(principal_directions);
 
+        sensor_msgs::PointCloud2 cloud_out;
+        pcl::toROSMsg(P, cloud_out);
+        cloud_out.header.frame_id = "compass";
+        cloud_out.header.stamp = stamp;
+        pc_pub_.publish(cloud_out);
+
+
     }
 
 private:
@@ -124,6 +139,7 @@ private:
 
     ros::Publisher pd_pub_;
     ros::Publisher rot_pub_;
+    ros::Publisher pc_pub_;
 
 };
 
