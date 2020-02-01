@@ -52,6 +52,7 @@ add_message_files(
         FILES
         PrincipalDirections.msg
         PrincipalPlanes.msg
+        PrincipalPlane.msg
 )
 
 ## Generate services in the 'srv' folder
