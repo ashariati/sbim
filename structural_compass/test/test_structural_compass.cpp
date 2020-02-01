@@ -97,7 +97,7 @@ TEST_CASE("Entropy Compass", "[EntropyCompass]") {
 
         Eigen::Matrix3f R;
         std::vector<Eigen::Vector3f> principal_directions;
-        // R = compass.principalDirections(*cloud_ptr, gravity, principal_directions);
+        R = compass.principalDirections(*cloud_ptr, Eigen::Matrix3f::Identity(), gravity, principal_directions);
 
         // visualizeCloud(cloud_ptr);
 
