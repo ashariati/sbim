@@ -1,5 +1,6 @@
 <launch>
 
     <include file="$(find tf_publishers)/launch/visualization_tfs.launch"/>
+    <include file="$(find sbim_visualizations)/launch/sbim_visualizations.launch"/>
 
 </launch>

@@ -132,9 +132,9 @@ namespace structural_compass {
         Eigen::Matrix3f R_cs = R_cg * R_gs;
 
         // principal directions
-        Eigen::Vector3f vz{R_cs(2, 0), R_cs(2, 1), R_cs(2, 2)};
-        Eigen::Vector3f vx{R_cs(0, 0), R_cs(0, 1), R_cs(0, 2)};
-        Eigen::Vector3f vy{R_cs(1, 0), R_cs(1, 1), R_cs(1, 2)};
+        Eigen::Vector3f vz{0.0, 0.0, 1.0};
+        Eigen::Vector3f vx{1.0, 0.0, 0.0};
+        Eigen::Vector3f vy{0.0, 1.0, 0.0};
         Eigen::Vector3f v4 = (vx + vy).normalized();
         Eigen::Vector3f v5 = (-vx + vy).normalized();
 

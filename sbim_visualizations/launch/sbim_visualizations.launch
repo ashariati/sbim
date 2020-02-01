@@ -1,0 +1,7 @@
+<launch>
+
+    <node pkg="sbim_visualizations" type="principal_directions_visualization" name="principal_directions_visualization">
+        <remap from="/principal_directions" to="/point_cloud_compass_node/principal_directions"/>
+    </node>
+
+</launch>
