@@ -6,7 +6,6 @@
 #define SRC_STRUCTURAL_COMPASS_H
 
 #include <math.h>
-#include <limits>
 #include <vector>
 #include <pcl/common/common.h>
 #include <pcl/common/transforms.h>
@@ -27,35 +26,32 @@ namespace structural_compass {
 
         class YawTracker {
 
-            float r_;
-            float q_;
-
-            float sigma_max_;
+            double r_;
+            double q_;
 
         public:
-            float theta_;
-            float sigma_;
+            double theta_;
+            double sigma_;
 
             YawTracker() = delete;
 
-            YawTracker(float mu, float sigma, float r, float q, float sigma_max = std::numeric_limits<float>::max()) {
+            YawTracker(double mu, double sigma, double r, double q) {
                 theta_ = mu;
                 sigma_ = sigma;
                 r_ = r;
                 q_ = q;
-                sigma_max_ = sigma_max;
             }
 
             ~YawTracker() = default;
 
-            void predict(float dtheta) {
+            void predict(double dtheta) {
                 theta_ = theta_ + dtheta;
                 sigma_ = sigma_ + r_;
-                sigma_ = std::min(sigma_, sigma_max_);
+                sigma_ = std::min(sigma_, M_PI_4);
             }
 
-            void update(float theta) {
-                float K = sigma_ / (sigma_ + q_);
+            void update(double theta) {
+                double K = sigma_ / (sigma_ + q_);
                 theta_ = theta_ + K * (theta - theta_);
                 sigma_ = (1 - K) * sigma_;
             }
@@ -75,7 +71,7 @@ namespace structural_compass {
 
     public:
 
-        EntropyCompass() : yaw_tracker_(0.0, M_PI_4, 0.1 * (M_PI / 180.0), 1.0 * (M_PI / 180.0), M_PI_4) {
+        EntropyCompass() : yaw_tracker_(0.0, M_PI_4, 1.0 * (M_PI / 180.0), 1.0 * (M_PI / 180.0)) {
             is_initialized_ = false;
         }
 
