@@ -59,7 +59,9 @@ namespace structural_compass {
         } yaw_tracker_;
 
         std::vector<float> searchSpace(float theta, float radius, const int num_samples = 60) const;
+
         float cloudEntropy(const PointCloud &point_cloud) const;
+
         float histogramEntropy(Eigen::ArrayXf &histogram) const;
 
         Eigen::Matrix3f gravityAlignedFrame(const Eigen::Vector3f &gravity) const;
@@ -126,12 +128,23 @@ namespace structural_compass {
         R_gs_ = R_gs;
         R_cg_ = R_cg;
 
+        // compass transform
+        Eigen::Matrix3f R_cs = R_cg * R_gs;
 
-        // // directions.push_back(v3);
-        // // directions.push_back(v2);
-        // // directions.push_back(v1);
+        // principal directions
+        Eigen::Vector3f vz{R_cs(2, 0), R_cs(2, 1), R_cs(2, 2)};
+        Eigen::Vector3f vx{R_cs(0, 0), R_cs(0, 1), R_cs(0, 2)};
+        Eigen::Vector3f vy{R_cs(1, 0), R_cs(1, 1), R_cs(1, 2)};
+        Eigen::Vector3f v4 = (vx + vy).normalized();
+        Eigen::Vector3f v5 = (-vx + vy).normalized();
 
-        return R_cg * R_gs;
+        directions.push_back(vz);
+        directions.push_back(vx);
+        directions.push_back(vy);
+        directions.push_back(v4);
+        directions.push_back(v5);
+
+        return R_cs;
 
     }
 
