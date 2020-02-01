@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(sbim_msgs)
+project(scene_parsing)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -8,10 +8,12 @@ project(sbim_msgs)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-        message_generation
-        shape_msgs
-        geometry_msgs
-        std_msgs
+        eigen_conversions
+        message_filters
+        pcl_ros
+        roscpp
+        rospy
+        sbim_msgs
         )
 
 ## System dependencies are found with CMake's conventions
@@ -48,11 +50,11 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-add_message_files(
-        FILES
-        PrincipalDirections.msg
-        PrincipalPlanes.msg
-)
+# add_message_files(
+#   FILES
+#   Message1.msg
+#   Message2.msg
+# )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -69,12 +71,10 @@ add_message_files(
 # )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(
-        DEPENDENCIES
-        shape_msgs
-        geometry_msgs
-        std_msgs
-)
+# generate_messages(
+#   DEPENDENCIES
+#   sbim_msgs
+# )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -107,8 +107,8 @@ generate_messages(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
         #  INCLUDE_DIRS include
-        #  LIBRARIES sbim_msgs
-        CATKIN_DEPENDS message_runtime shape_msgs geometry_msgs std_msgs
+        #  LIBRARIES scene_parsing
+        #  CATKIN_DEPENDS pcl_ros roscpp rospy sbim_msgs
         #  DEPENDS system_lib
 )
 
@@ -119,13 +119,13 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-        # include
+        include
         ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/sbim_msgs.cpp
+#   src/${PROJECT_NAME}/scene_parsing.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -136,7 +136,9 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/sbim_msgs_node.cpp)
+# add_executable(${PROJECT_NAME}_node src/scene_parsing_node.cpp)
+
+add_executable(plane_detector_node src/plane_detector_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -147,11 +149,16 @@ include_directories(
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(plane_detector_node ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
 # )
+
+target_link_libraries(plane_detector_node
+        ${catkin_LIBRARIES}
+        )
 
 #############
 ## Install ##
@@ -200,7 +207,7 @@ include_directories(
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_sbim_msgs.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_scene_parsing.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

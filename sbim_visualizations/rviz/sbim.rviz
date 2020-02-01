@@ -106,7 +106,7 @@ Visualization Manager:
       Size (Pixels): 3
       Size (m): 0.009999999776482582
       Style: Flat Squares
-      Topic: /point_cloud_compass_node/transformed_scan
+      Topic: /scan_aggregator/aggregate_scan
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
@@ -157,9 +157,9 @@ Visualization Manager:
       Near Clip Distance: 0.009999999776482582
       Pitch: 0.6969971656799316
       Position:
-        X: -3.865643262863159
-        Y: 10.78415298461914
-        Z: 9.726381301879883
+        X: -2.7271029949188232
+        Y: 8.102058410644531
+        Z: 7.287092208862305
       Target Frame: compass
       Value: FPS (rviz)
       Yaw: 5.113834857940674
@@ -181,4 +181,4 @@ Window Geometry:
     collapsed: false
   Width: 1446
   X: 214
-  Y: 37
+  Y: 27

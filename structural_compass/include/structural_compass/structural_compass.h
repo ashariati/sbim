@@ -62,7 +62,7 @@ namespace structural_compass {
 
         float cloudEntropy(const PointCloud &point_cloud) const;
 
-        float histogramEntropy(Eigen::ArrayXf &histogram) const;
+        float histogramEntropy(const Eigen::ArrayXf &histogram) const;
 
         Eigen::Matrix3f gravityAlignedFrame(const Eigen::Vector3f &gravity) const;
 
@@ -168,7 +168,7 @@ namespace structural_compass {
     template<typename PointCloud>
     float EntropyCompass<PointCloud>::cloudEntropy(const PointCloud &point_cloud) const {
 
-        const long kNumBins = 400;
+        const int kNumBins = 400;
         const float kRadius = 10.0;
         const float kBinWidth = (2 * kRadius) / kNumBins;
 
@@ -211,7 +211,7 @@ namespace structural_compass {
 
     template<typename PointCloud>
     float
-    EntropyCompass<PointCloud>::histogramEntropy(Eigen::ArrayXf &histogram) const {
+    EntropyCompass<PointCloud>::histogramEntropy(const Eigen::ArrayXf &histogram) const {
 
         int num_points = histogram.sum();
         assert(num_points != 0);

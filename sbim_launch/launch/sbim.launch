@@ -2,6 +2,7 @@
 
     <include file="$(find scan_aggregator)/launch/exyn_aggregator.launch" />
     <include file="$(find structural_compass)/launch/point_cloud_compass.launch" />
+    <include file="$(find scene_parsing)/launch/scene_parsing.launch" />
 
     <include file="$(find sbim_launch)/launch/visualization.launch"/>
 

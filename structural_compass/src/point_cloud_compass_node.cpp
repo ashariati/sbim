@@ -85,7 +85,7 @@ public:
 
         message_queue_.emplace_back(*cloud_msg, *pose_msg);
 
-        while (message_queue_.size() > queue_size_) {
+        if (message_queue_.size() > queue_size_) {
             message_queue_.pop_front();
         }
 
@@ -126,20 +126,19 @@ public:
 private:
 
     ros::NodeHandle nh_;
+    message_filters::Subscriber<PointCloud> pc_sub_;
+    message_filters::Subscriber<geometry_msgs::PoseStamped> pose_sub_;
+    message_filters::Synchronizer<Policy> pc_sync_;
+    ros::Publisher pd_pub_;
+    ros::Publisher rot_pub_;
+    ros::Publisher pc_pub_;
+
     float frequency_;
     int queue_size_;
-
     std::deque<std::tuple<PointCloud, geometry_msgs::PoseStamped>> message_queue_;
 
     std::unique_ptr<Compass> compass_;
 
-    message_filters::Subscriber<PointCloud> pc_sub_;
-    message_filters::Subscriber<geometry_msgs::PoseStamped> pose_sub_;
-    message_filters::Synchronizer<Policy> pc_sync_;
-
-    ros::Publisher pd_pub_;
-    ros::Publisher rot_pub_;
-    ros::Publisher pc_pub_;
 
 };
 
