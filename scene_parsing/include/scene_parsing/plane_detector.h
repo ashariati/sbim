@@ -14,15 +14,17 @@ public:
 
     ~PlaneDetector() = default;
 
-    void scan(const PointCloud &point_cloud, const Eigen::Vector3f &direction, std::vector<float> &offsets) const;
+    void scan(const PointCloud &point_cloud, const Eigen::Vector3f &direction,
+              std::vector<float> &offsets, std::vector<double> &intensities) const;
 
 };
 
 template<typename PointCloud>
 void PlaneDetector<PointCloud>::scan(const PointCloud &point_cloud, const Eigen::Vector3f &direction,
-                                     std::vector<float> &offsets) const {
+                                     std::vector<float> &offsets, std::vector<double> &intensities) const {
 
     offsets.push_back(0.0);
+    intensities.push_back(100.0);
 
 }
 

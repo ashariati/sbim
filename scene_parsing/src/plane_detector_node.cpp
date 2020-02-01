@@ -80,24 +80,29 @@ public:
             for (auto v : directions) {
 
                 std::vector<float> offsets;
-                plane_detector_.scan(P, v, offsets);
+                std::vector<double> intensities;
+                plane_detector_.scan(P, v, offsets, intensities);
 
-                for (auto d : offsets) {
+                for (size_t i = 0; i < offsets.size(); ++i) {
 
                     shape_msgs::Plane plane;
                     plane.coef[0] = v[0];
                     plane.coef[1] = v[1];
                     plane.coef[2] = v[2];
-                    plane.coef[3] = d;
+                    plane.coef[3] = offsets[i];
                     principal_planes.planes.push_back(plane);
+
+                    std_msgs::Float64 intensity;
+                    intensity.data = intensities[i];
+                    principal_planes.intensities.push_back(intensity);
 
                     std_msgs::String plane_label;
                     plane_label.data = std::to_string(direction_index);
-                    principal_planes.plane_labels.push_back(plane_label);
+                    principal_planes.labels.push_back(plane_label);
 
                     std_msgs::String plane_id;
                     plane_id.data = std::to_string(plane_count_);
-                    principal_planes.plane_ids.push_back(plane_id);
+                    principal_planes.ids.push_back(plane_id);
 
                     plane_count_ += 1;
 

@@ -1,4 +1,5 @@
 Header header
 shape_msgs/Plane[] planes
-std_msgs/String[] plane_labels
-std_msgs/String[] plane_ids
+std_msgs/Float64[] intensities
+std_msgs/String[] labels
+std_msgs/String[] ids
