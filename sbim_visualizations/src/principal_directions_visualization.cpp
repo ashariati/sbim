@@ -3,7 +3,7 @@
 //
 
 #include <ros/ros.h>
-#include <sbim_msgs/PrincipalDirections.h>
+#include <sbim_msgs/PrincipalDirectionArray.h>
 #include <visualization_msgs/MarkerArray.h>
 
 class PrincipalDirectionsVisualization {
@@ -13,13 +13,13 @@ public:
     ~PrincipalDirectionsVisualization() = default;
 
     PrincipalDirectionsVisualization() : nh_("~") {
-        sub_ = nh_.subscribe<sbim_msgs::PrincipalDirections>("/principal_directions", 1,
-                                                             boost::bind(&PrincipalDirectionsVisualization::callback,
+        sub_ = nh_.subscribe<sbim_msgs::PrincipalDirectionArray>("/principal_directions", 1,
+                                                                 boost::bind(&PrincipalDirectionsVisualization::callback,
                                                                          this, _1));
         pub_ = nh_.advertise<visualization_msgs::MarkerArray>("principal_direction_viz", 0);
     }
 
-    void callback(const sbim_msgs::PrincipalDirections::ConstPtr &directions) {
+    void callback(const sbim_msgs::PrincipalDirectionArray::ConstPtr &directions) {
 
         visualization_msgs::MarkerArray marker_array;
         int id = 0;

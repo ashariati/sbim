@@ -7,14 +7,14 @@
 #include <message_filters/synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
 #include <pcl_ros/point_cloud.h>
-#include <sbim_msgs/PrincipalDirections.h>
-#include <sbim_msgs/PrincipalPlanes.h>
+#include <sbim_msgs/PrincipalDirectionArray.h>
+#include <sbim_msgs/PrincipalPlaneArray.h>
 
 #include <scene_parsing/plane_detector.h>
 #include <eigen_conversions/eigen_msg.h>
 
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
-typedef message_filters::sync_policies::ApproximateTime<PointCloud, sbim_msgs::PrincipalDirections> Policy;
+typedef message_filters::sync_policies::ApproximateTime<PointCloud, sbim_msgs::PrincipalDirectionArray> Policy;
 
 class PlaneDetectorNode {
 
@@ -34,11 +34,12 @@ public:
         nh_.param<int>("queue_size", queue_size_, 1);
 
         sync_.registerCallback(boost::bind(&PlaneDetectorNode::callback, this, _1, _2));
-        pub_ = nh_.advertise<sbim_msgs::PrincipalPlanes>("principal_planes", 10);
+        pub_ = nh_.advertise<sbim_msgs::PrincipalPlaneArray>("principal_planes", 10);
 
     }
 
-    void callback(const PointCloud::ConstPtr &point_cloud, const sbim_msgs::PrincipalDirections::ConstPtr &directions) {
+    void
+    callback(const PointCloud::ConstPtr &point_cloud, const sbim_msgs::PrincipalDirectionArray::ConstPtr &directions) {
 
         message_queue_.emplace_back(*point_cloud, *directions);
 
@@ -65,7 +66,7 @@ public:
 
             PointCloud P = std::get<0>(message);
 
-            sbim_msgs::PrincipalDirections pd_msg = std::get<1>(message);
+            sbim_msgs::PrincipalDirectionArray pd_msg = std::get<1>(message);
             std::vector<Eigen::Vector3f> directions;
             for (auto e : pd_msg.directions) {
                 Eigen::Vector3d v;
@@ -73,7 +74,7 @@ public:
                 directions.emplace_back(v.cast<float>());
             }
 
-            sbim_msgs::PrincipalPlanes principal_planes;
+            sbim_msgs::PrincipalPlaneArray principal_planes;
             principal_planes.header.frame_id = pd_msg.header.frame_id;
             principal_planes.header.stamp = pd_msg.header.stamp;
             int direction_index = 0;
@@ -126,13 +127,13 @@ private:
 
     ros::NodeHandle nh_;
     message_filters::Subscriber<PointCloud> pc_sub_;
-    message_filters::Subscriber<sbim_msgs::PrincipalDirections> pd_sub_;
+    message_filters::Subscriber<sbim_msgs::PrincipalDirectionArray> pd_sub_;
     message_filters::Synchronizer<Policy> sync_;
     ros::Publisher pub_;
 
     int frequency_;
     int queue_size_;
-    std::deque<std::tuple<PointCloud, sbim_msgs::PrincipalDirections>> message_queue_;
+    std::deque<std::tuple<PointCloud, sbim_msgs::PrincipalDirectionArray>> message_queue_;
 
     PlaneDetector<PointCloud> plane_detector_;
 

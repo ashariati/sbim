@@ -13,7 +13,7 @@
 #include <eigen_conversions/eigen_msg.h>
 #include <pcl_ros/point_cloud.h>
 
-#include <sbim_msgs/PrincipalDirections.h>
+#include <sbim_msgs/PrincipalDirectionArray.h>
 #include <structural_compass/structural_compass.h>
 
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
@@ -35,7 +35,7 @@ public:
 
         compass_ = std::make_unique<Compass>();
         pc_sync_.registerCallback(boost::bind(&PointCloudCompassNode::callback, this, _1, _2));
-        pd_pub_ = nh_.advertise<sbim_msgs::PrincipalDirections>("principal_directions", 10);
+        pd_pub_ = nh_.advertise<sbim_msgs::PrincipalDirectionArray>("principal_directions", 10);
         rot_pub_ = nh_.advertise<geometry_msgs::TransformStamped>("compass_transform", 10);
         pc_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("transformed_scan", 10);
 
@@ -104,7 +104,7 @@ public:
         tf::transformEigenToMsg(G.cast<double>(), transform.transform);
         rot_pub_.publish(transform);
 
-        sbim_msgs::PrincipalDirections principal_directions;
+        sbim_msgs::PrincipalDirectionArray principal_directions;
         principal_directions.header.frame_id = "compass";
         principal_directions.header.stamp = stamp;
         for (auto &d : directions) {

@@ -60,7 +60,7 @@ find_package(Catch2 REQUIRED)
 ## Generate messages in the 'msg' folder
 # add_message_files(
 #         FILES
-#         PrincipalDirections.msg
+#         PrincipalDirectionArray.msg
 # )
 
 ## Generate services in the 'srv' folder
