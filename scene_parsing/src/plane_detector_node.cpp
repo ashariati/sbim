@@ -82,7 +82,7 @@ public:
 
                 std::vector<float> offsets;
                 std::vector<double> intensities;
-                plane_detector_.scan(P, v, offsets, intensities);
+                plane_detector_.scanDirection(P, v, offsets, intensities);
 
                 for (size_t i = 0; i < offsets.size(); ++i) {
 

@@ -17,13 +17,13 @@
 
 #include <structural_compass/structural_compass.h>
 
-void visualizeCloud(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &cloud) {
-    std::cout << "Cloud size: " << cloud->points.size() << std::endl;
-    pcl::visualization::CloudViewer viewer("Cloud Viewer");
-    viewer.showCloud(cloud);
-    while (!viewer.wasStopped()) {
-    }
-}
+// void visualizeCloud(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &cloud) {
+//     std::cout << "Cloud size: " << cloud->points.size() << std::endl;
+//     pcl::visualization::CloudViewer viewer("Cloud Viewer");
+//     viewer.showCloud(cloud);
+//     while (!viewer.wasStopped()) {
+//     }
+// }
 
 void loadPointCloud(const std::string &file, pcl::PointCloud<pcl::PointXYZ> &cloud) {
 

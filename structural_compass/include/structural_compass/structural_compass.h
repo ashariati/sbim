@@ -168,38 +168,32 @@ namespace structural_compass {
     template<typename PointCloud>
     float EntropyCompass<PointCloud>::cloudEntropy(const PointCloud &point_cloud) const {
 
-        const int kNumBins = 400;
-        const float kRadius = 10.0;
-        const float kBinWidth = (2 * kRadius) / kNumBins;
+        float bin_width = 0.05;
+        float radius = 10.0;
+        int num_bins = std::ceil((2 * radius) / bin_width);
 
-        Eigen::ArrayXf e_data = Eigen::ArrayXf::LinSpaced(kNumBins + 1, -kRadius, kRadius);
-        std::vector<float> edges = std::vector<float>(e_data.data(), e_data.data() + e_data.size());
-
-        Eigen::ArrayXf x_bins = Eigen::ArrayXf::Zero(edges.size() - 1);
-        Eigen::ArrayXf y_bins = Eigen::ArrayXf::Zero(edges.size() - 1);
+        Eigen::ArrayXf x_bins = Eigen::ArrayXf::Zero(num_bins);
+        Eigen::ArrayXf y_bins = Eigen::ArrayXf::Zero(num_bins);
 
         for (auto p : point_cloud.points) {
 
             if (!pcl_isfinite(p.x) || !pcl_isfinite(p.y))
                 continue;
 
-            float x_distance = (p.x - (-kRadius));
-            float y_distance = (p.y - (-kRadius));
+            bool in_range_x = (p.x < radius) && (p.x > -radius);
+            bool in_range_y = (p.y < radius) && (p.y > -radius);
 
-            if (x_distance < 0 || y_distance < 0) {
+            if (!(in_range_x && in_range_y)) {
                 continue;
             }
 
-            int x_index = static_cast<int>(x_distance / kBinWidth);
-            int y_index = static_cast<int>(y_distance / kBinWidth);
-
-            if (x_index >= x_bins.size() || y_index >= y_bins.size()) {
-                continue;
-            }
+            float x_distance = (p.x - (-radius));
+            float y_distance = (p.y - (-radius));
+            int x_index = static_cast<int>(x_distance / bin_width);
+            int y_index = static_cast<int>(y_distance / bin_width);
 
             x_bins[x_index] += 1;
             y_bins[y_index] += 1;
-
 
         }
 

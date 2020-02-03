@@ -19,6 +19,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
+find_package(Catch2 REQUIRED)
+
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -214,3 +216,6 @@ target_link_libraries(plane_detector_node
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+add_executable(signal_1d-test test/test_signal_1d.cpp)
+target_link_libraries(signal_1d-test Catch2::Catch2)
