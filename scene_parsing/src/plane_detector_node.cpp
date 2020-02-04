@@ -32,6 +32,8 @@ public:
 
         nh_.param<int>("frequency", frequency_, 10);
         nh_.param<int>("queue_size", queue_size_, 1);
+        nh_.param<float>("scan_range", scan_range_, 10.0);
+        nh_.param<int>("min_intensity", min_intensity_, 100);
 
         sync_.registerCallback(boost::bind(&PlaneDetectorNode::callback, this, _1, _2));
         pub_ = nh_.advertise<sbim_msgs::PrincipalPlaneArray>("principal_planes", 10);
@@ -82,7 +84,7 @@ public:
 
                 std::vector<float> offsets;
                 std::vector<double> intensities;
-                plane_detector_.scanDirection(P, v, 10.0, offsets, intensities);
+                plane_detector_.scanDirection(P, v, scan_range_, offsets, intensities);
 
                 for (size_t i = 0; i < offsets.size(); ++i) {
 
@@ -137,7 +139,9 @@ private:
 
     PlaneDetector<PointCloud> plane_detector_;
 
-    uint64_t plane_count_;
+    size_t plane_count_;
+    int min_intensity_;
+    float scan_range_;
 
 };
 

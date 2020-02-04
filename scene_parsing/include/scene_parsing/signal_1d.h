@@ -54,7 +54,64 @@ namespace signal_1d {
     }
 
     template<typename T>
-    void find_peaks(const std::vector<T> &signal) {
+    void find_peaks(const std::vector<T> &f, const T min_height, const T min_prominence,
+                    std::vector<T> &magnitude, std::vector<float> &location) {
+
+        // TODO: subtract min element from f!
+
+        // first derivative
+        std::vector<T> df = filter<T>(f, diff_kernel<T>());
+
+        // ensures first of repeated value selected
+        for (auto di : df) {
+            // make derivative values close to zero negative
+            di = (std::abs(di) < std::numeric_limits<T>::epsilon()) ? -std::numeric_limits<T>::epsilon() : di;
+        }
+
+        // find zero-crossing points of the derivative
+        std::vector<T> peaks_valleys;
+        std::vector<size_t> zero_crossing_ids;
+        for (size_t i = 1; i < df.size(); ++i) {
+            if (std::signbit(df[i] * df[i - 1])) {
+                zero_crossing_ids.push_back(i - 1);
+                peaks_valleys.push_back(f[i - 1]);
+            }
+        }
+
+        // loop through peaks
+        int start = (peaks_valleys[1] > peaks_valleys[0]) ? 1 : 0;
+        for (int i = start; i < peaks_valleys.size(); i += 2) {
+
+            T pi = peaks_valleys[i];
+
+            // find lowest valley between fi and the first peak larger than fi on its left
+            T left_ref = (i > 0) ? std::numeric_limits<T>::max() : 0;
+            for (int j = i - 1; j >= 0; j -= 2) {
+                T vj = peaks_valleys[j];
+                left_ref = std::min(left_ref, vj);
+                if (peaks_valleys[j - 1] > pi) {
+                    break;
+                }
+            }
+
+            // find lowest valley between fi and the first peak larger than fi on its right
+            T right_ref = (i + 1 < peaks_valleys.size()) ? std::numeric_limits<T>::max() : 0;
+            for (int j = i + 1; j < peaks_valleys.size(); j += 2) {
+                T vj = peaks_valleys[j];
+                right_ref = std::min(right_ref, vj);
+                if (peaks_valleys[std::min(j + 1, static_cast<int>(peaks_valleys.size()) - 1)] > pi) {
+                    break;
+                }
+            }
+
+            // save if thresholds are satisfied
+            T ref = std::max(left_ref, right_ref);
+            if ((pi > ref + min_prominence) && (pi > min_height)) {
+                magnitude.push_back(pi);
+                location.push_back(zero_crossing_ids[i]);
+            }
+
+        }
 
     }
 

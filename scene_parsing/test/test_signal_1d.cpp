@@ -67,3 +67,18 @@ TEST_CASE("Filter easy", "[Filter]") {
     REQUIRE(std::equal(y.begin(), y.end(), gt.begin()));
 
 }
+
+TEST_CASE("Find peaks", "[Find Peaks]") {
+
+    std::vector<double> f{8.4072, 2.5428, 8.1428, 2.4352, 9.2926, 3.4998, 1.9660, 2.5108, 6.1604, 4.7329};
+
+    std::vector<double> mag;
+    std::vector<float> loc;
+    signal_1d::find_peaks<double>(f, 0, 0, mag, loc);
+
+    for (size_t i = 0; i < loc.size(); ++i) {
+        std::cout << "loc: " << loc[i] << ", mag: " << mag[i] << std::endl;
+    }
+    std::cout << std::endl;
+
+}
