@@ -57,13 +57,16 @@ namespace signal_1d {
     void find_peaks(const std::vector<T> &f, const T min_height, const T min_prominence,
                     std::vector<T> &magnitude, std::vector<float> &location) {
 
-        // TODO: subtract min element from f!
+        // subtract min element from f for derivative
+        T min_f = *std::min_element(f.begin(), f.end());
+        std::vector<T> f_shift(f.size());
+        std::transform(f.begin(), f.end(), f_shift.begin(), [min_f](T t) { return t - min_f; });
 
         // first derivative
-        std::vector<T> df = filter<T>(f, diff_kernel<T>());
+        std::vector<T> df = filter<T>(f_shift, diff_kernel<T>());
 
         // ensures first of repeated value selected
-        for (auto di : df) {
+        for (auto &di : df) {
             // make derivative values close to zero negative
             di = (std::abs(di) < std::numeric_limits<T>::epsilon()) ? -std::numeric_limits<T>::epsilon() : di;
         }
@@ -85,7 +88,7 @@ namespace signal_1d {
             T pi = peaks_valleys[i];
 
             // find lowest valley between fi and the first peak larger than fi on its left
-            T left_ref = (i > 0) ? std::numeric_limits<T>::max() : 0;
+            T left_ref = (i > 0) ? std::numeric_limits<T>::max() : min_f;
             for (int j = i - 1; j >= 0; j -= 2) {
                 T vj = peaks_valleys[j];
                 left_ref = std::min(left_ref, vj);
@@ -95,7 +98,7 @@ namespace signal_1d {
             }
 
             // find lowest valley between fi and the first peak larger than fi on its right
-            T right_ref = (i + 1 < peaks_valleys.size()) ? std::numeric_limits<T>::max() : 0;
+            T right_ref = (i + 1 < peaks_valleys.size()) ? std::numeric_limits<T>::max() : min_f;
             for (int j = i + 1; j < peaks_valleys.size(); j += 2) {
                 T vj = peaks_valleys[j];
                 right_ref = std::min(right_ref, vj);

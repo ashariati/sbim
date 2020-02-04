@@ -68,7 +68,7 @@ TEST_CASE("Filter easy", "[Filter]") {
 
 }
 
-TEST_CASE("Find peaks", "[Find Peaks]") {
+TEST_CASE("Find peaks basic", "[Find Peaks]") {
 
     std::vector<double> f{8.4072, 2.5428, 8.1428, 2.4352, 9.2926, 3.4998, 1.9660, 2.5108, 6.1604, 4.7329};
 
@@ -81,4 +81,39 @@ TEST_CASE("Find peaks", "[Find Peaks]") {
     }
     std::cout << std::endl;
 
+    std::vector<float> gt_loc{0, 2, 4, 8};
+    std::vector<double> gt_mag{8.4072, 8.1428, 9.2926, 6.1604};
+
+    REQUIRE(gt_loc.size() == loc.size());
+    REQUIRE(std::equal(loc.begin(), loc.end(), gt_loc.begin()));
+    REQUIRE(gt_mag.size() == mag.size());
+    REQUIRE(std::equal(mag.begin(), mag.end(), gt_mag.begin()));
+
 }
+
+TEST_CASE("Find peaks negatives", "[Find Peaks]") {
+
+    std::vector<double> f{-1.5928, -7.4572, -1.8572, -7.5648, -0.7074, -6.5002, -8.0340, -7.4892, -3.8396, -5.2671};
+
+    std::vector<double> mag;
+    std::vector<float> loc;
+    signal_1d::find_peaks<double>(f, -10, 0, mag, loc);
+
+    for (size_t i = 0; i < loc.size(); ++i) {
+        std::cout << "loc: " << loc[i] << ", mag: " << mag[i] << std::endl;
+    }
+    std::cout << std::endl;
+
+    std::vector<float> gt_loc{0, 2, 4, 8};
+    std::vector<double> gt_mag{-1.5928, -1.8572, -0.7074, -3.8396};
+
+    REQUIRE(gt_loc.size() == loc.size());
+    REQUIRE(std::equal(loc.begin(), loc.end(), gt_loc.begin()));
+    REQUIRE(gt_mag.size() == mag.size());
+    REQUIRE(std::equal(mag.begin(), mag.end(), gt_mag.begin()));
+
+}
+
+
+
+
