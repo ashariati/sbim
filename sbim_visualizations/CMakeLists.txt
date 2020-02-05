@@ -16,6 +16,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
+find_package(Eigen3 REQUIRED)
+
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -116,8 +118,9 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-        # include
+        include
         ${catkin_INCLUDE_DIRS}
+        ${Eigen3_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -136,6 +139,7 @@ include_directories(
 # add_executable(${PROJECT_NAME}_node src/sbim_visualizations_node.cpp)
 
 add_executable(principal_directions_visualization src/principal_directions_visualization.cpp)
+add_executable(principal_planes_visualization src/principal_planes_visualization.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -147,6 +151,7 @@ add_executable(principal_directions_visualization src/principal_directions_visua
 ## same as for the library above
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(principal_directions_visualization ${catkin_EXPORTED_TARGETS})
+add_dependencies(principal_planes_visualization ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node
@@ -154,6 +159,9 @@ add_dependencies(principal_directions_visualization ${catkin_EXPORTED_TARGETS})
 # )
 
 target_link_libraries(principal_directions_visualization
+        ${catkin_LIBRARIES}
+        )
+target_link_libraries(principal_planes_visualization
         ${catkin_LIBRARIES}
         )
 

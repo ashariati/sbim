@@ -12,6 +12,8 @@ Panels:
         - /TF1/Tree1
         - /PointCloud21
         - /MarkerArray1
+        - /MarkerArray2
+        - /MarkerArray2/Status1
       Splitter Ratio: 0.5794117450714111
     Tree Height: 567
   - Class: rviz/Selection
@@ -119,6 +121,14 @@ Visualization Manager:
         principal_directions: true
       Queue Size: 100
       Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /principal_planes_visualization/principal_planes_viz
+      Name: MarkerArray
+      Namespaces:
+        principal_planes: true
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 0; 0; 0
@@ -180,5 +190,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1446
-  X: 214
+  X: 435
   Y: 27

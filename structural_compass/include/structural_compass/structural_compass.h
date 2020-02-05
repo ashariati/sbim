@@ -5,7 +5,7 @@
 #ifndef SRC_STRUCTURAL_COMPASS_H
 #define SRC_STRUCTURAL_COMPASS_H
 
-#include <math.h>
+#include <cmath>
 #include <vector>
 #include <pcl/common/common.h>
 #include <pcl/common/transforms.h>

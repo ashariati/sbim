@@ -4,4 +4,8 @@
         <remap from="/principal_directions" to="/point_cloud_compass_node/principal_directions"/>
     </node>
 
+    <node pkg="sbim_visualizations" type="principal_planes_visualization" name="principal_planes_visualization">
+        <remap from="/principal_planes" to="/plane_detector_node/principal_planes"/>
+    </node>
+
 </launch>

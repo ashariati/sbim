@@ -31,12 +31,12 @@ public:
                           frequency_(10),
                           queue_size_(1),
                           scan_range_(10.0),
-                          min_intensity_(100) {
+                          min_intensity_(1000) {
 
         nh_.param<int>("frequency", frequency_, 10);
         nh_.param<int>("queue_size", queue_size_, 1);
         nh_.param<float>("scan_range", scan_range_, 10.0);
-        nh_.param<int>("min_intensity", min_intensity_, 100);
+        nh_.param<int>("min_intensity", min_intensity_, 1000);
 
         sync_.registerCallback(boost::bind(&PlaneDetectorNode::callback, this, _1, _2));
         pub_ = nh_.advertise<sbim_msgs::PrincipalPlaneArray>("principal_planes", 10);

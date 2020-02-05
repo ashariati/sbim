@@ -3,6 +3,8 @@
     <node pkg="scene_parsing" type="plane_detector_node" name="plane_detector_node">
         <remap from="/scan" to="/point_cloud_compass_node/transformed_scan" />
         <remap from="/principal_directions" to="/point_cloud_compass_node/principal_directions" />
+        <param name="scan_range" value="5.0"/>
+        <param name="min_intensity" value="5000.0"/>
     </node>
 
 </launch>
