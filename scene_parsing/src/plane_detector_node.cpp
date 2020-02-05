@@ -26,9 +26,12 @@ public:
                           pc_sub_(nh_, "/scan", 1),
                           pd_sub_(nh_, "/principal_directions", 1),
                           sync_(Policy(10), pc_sub_, pd_sub_),
-                          plane_detector_() {
-
-        plane_count_ = 0;
+                          plane_detector_(),
+                          plane_count_(0),
+                          frequency_(10),
+                          queue_size_(1),
+                          scan_range_(10.0),
+                          min_intensity_(100) {
 
         nh_.param<int>("frequency", frequency_, 10);
         nh_.param<int>("queue_size", queue_size_, 1);
@@ -84,7 +87,8 @@ public:
 
                 std::vector<float> offsets;
                 std::vector<double> intensities;
-                plane_detector_.scanDirection(P, v, scan_range_, offsets, intensities);
+                plane_detector_.scanDirection(P, v, scan_range_, min_intensity_,
+                                              offsets, intensities);
 
                 for (size_t i = 0; i < offsets.size(); ++i) {
 
@@ -133,15 +137,15 @@ private:
     message_filters::Synchronizer<Policy> sync_;
     ros::Publisher pub_;
 
-    int frequency_;
-    int queue_size_;
+    int frequency_{};
+    int queue_size_{};
     std::deque<std::tuple<PointCloud, sbim_msgs::PrincipalDirectionArray>> message_queue_;
 
     PlaneDetector<PointCloud> plane_detector_;
 
     size_t plane_count_;
-    int min_intensity_;
-    float scan_range_;
+    int min_intensity_{};
+    float scan_range_{};
 
 };
 

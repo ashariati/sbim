@@ -15,7 +15,7 @@ public:
 
     ~PlaneDetector() = default;
 
-    void scanDirection(const PointCloud &point_cloud, const Eigen::Vector3f &direction, float range,
+    void scanDirection(const PointCloud &point_cloud, const Eigen::Vector3f &direction, float range, int min_intensity,
                        std::vector<float> &offsets, std::vector<double> &intensities) const;
 
 };
@@ -23,6 +23,7 @@ public:
 template<typename PointCloud>
 void
 PlaneDetector<PointCloud>::scanDirection(const PointCloud &point_cloud, const Eigen::Vector3f &direction, float range,
+                                         int min_intensity,
                                          std::vector<float> &offsets, std::vector<double> &intensities) const {
 
     Eigen::MatrixXf P = point_cloud.getMatrixXfMap();
@@ -31,8 +32,13 @@ PlaneDetector<PointCloud>::scanDirection(const PointCloud &point_cloud, const Ei
     std::vector<float> d(distances.data(), distances.data() + distances.size());
     std::vector<int> counts = signal_1d::histogram_counts<float>(d, 0, range, 0.05);
 
-    offsets.push_back(0.0);
-    intensities.push_back(100.0);
+    std::vector<float> peak_locs;
+    std::vector<double> x(counts.begin(), counts.end());
+    signal_1d::find_peaks<double>(x, min_intensity, min_intensity, intensities, peak_locs);
+
+    for (auto i : peak_locs) {
+        offsets.push_back((0.05 * i) + 0.025);
+    }
 
 }
 
