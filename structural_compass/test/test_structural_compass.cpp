@@ -13,8 +13,6 @@
 #include <pcl/visualization/cloud_viewer.h>
 #include <pcl/io/pcd_io.h>
 
-#define private public
-
 #include <structural_compass/structural_compass.h>
 
 // void visualizeCloud(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &cloud) {
@@ -53,31 +51,6 @@ Eigen::Vector3f gravityVectorFromFile(const std::string &file, const int index) 
 
 }
 
-TEST_CASE("Entropy Compass Utilities", "[EntropyCompass]") {
-
-    structural_compass::EntropyCompass<pcl::PointCloud<pcl::PointXYZ>> compass;
-
-    SECTION("computing histogram entropies") {
-
-        Eigen::ArrayXf h1(7);
-        h1 << 4, 6, 3, 8, 3, 6, 7;
-
-        auto H = compass.histogramEntropy(h1);
-        REQUIRE(std::abs(H - 1.884) < 1e-4);
-
-    }
-
-    // SECTION("print search space") {
-    //     auto search_space = compass.searchSpace();
-    //     std::cout << "search space size: " << search_space.size() << std::endl;
-    //     for (auto s : search_space) {
-    //         std::cout << s << ", ";
-    //     }
-    //     std::cout << std::endl;
-    // }
-
-}
-
 TEST_CASE("Entropy Compass", "[EntropyCompass]") {
 
     int cloud_id = 123;
@@ -91,7 +64,7 @@ TEST_CASE("Entropy Compass", "[EntropyCompass]") {
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
     loadPointCloud(cloud_file, *cloud_ptr);
 
-    structural_compass::EntropyCompass<pcl::PointCloud<pcl::PointXYZ>> compass;
+    structural_compass::EntropyCompass compass;
 
     SECTION("principal directions") {
 

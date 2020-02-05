@@ -20,7 +20,6 @@ typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
 typedef message_filters::sync_policies::ApproximateTime<PointCloud, geometry_msgs::PoseStamped> Policy;
 // typedef message_filters::sync_policies::ExactTime<PointCloud, geometry_msgs::PoseStamped> Policy;
 
-template<typename Compass>
 class PointCloudCompassNode {
 
 public:
@@ -33,7 +32,7 @@ public:
         nh_.param<float>("frequency", frequency_, 10.0);
         nh_.param<int>("queue_size", queue_size_, 1);
 
-        compass_ = std::make_unique<Compass>();
+        compass_ = std::make_unique<structural_compass::EntropyCompass>();
         pc_sync_.registerCallback(boost::bind(&PointCloudCompassNode::callback, this, _1, _2));
         pd_pub_ = nh_.advertise<sbim_msgs::PrincipalDirectionArray>("principal_directions", 10);
         rot_pub_ = nh_.advertise<geometry_msgs::TransformStamped>("compass_transform", 10);
@@ -137,7 +136,7 @@ private:
     int queue_size_;
     std::deque<std::tuple<PointCloud, geometry_msgs::PoseStamped>> message_queue_;
 
-    std::unique_ptr<Compass> compass_;
+    std::unique_ptr<structural_compass::EntropyCompass> compass_;
 
 
 };
@@ -145,7 +144,7 @@ private:
 int main(int argc, char *argv[]) {
     ros::init(argc, argv, "point_cloud_compass_node");
 
-    PointCloudCompassNode<structural_compass::EntropyCompass<PointCloud>> compass_node;
+    PointCloudCompassNode compass_node;
     compass_node.loop();
 
     return 0;
