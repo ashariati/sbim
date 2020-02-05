@@ -39,14 +39,14 @@ PlaneDetector<PointCloud>::scanDirection(const PointCloud &point_cloud, const Ei
         }
     }
 
-    std::vector<int> counts = signal_1d::histogram_counts<float>(distances, 0, range, 0.05);
+    std::vector<int> counts = signal_1d::histogram_counts<float>(distances, -range, range, 0.05);
 
     std::vector<float> peak_locs;
     std::vector<double> x(counts.begin(), counts.end());
     signal_1d::find_peaks<double>(x, min_intensity, min_intensity, intensities, peak_locs);
 
     for (auto i : peak_locs) {
-        offsets.push_back((0.05 * i) + 0.025);
+        offsets.push_back(((0.05 * i) + 0.025) - range);
     }
 
 }

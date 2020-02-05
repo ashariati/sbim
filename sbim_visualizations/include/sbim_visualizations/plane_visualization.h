@@ -14,7 +14,12 @@ namespace sbim_visualizations {
                                  std::vector<Eigen::Vector3f> &out_vertices) {
 
         Eigen::Vector3f x1 = normal;
-        Eigen::Vector3f x2(-x1[1], x1[0], 0);
+        Eigen::Vector3f x2;
+        if (!normal.isApprox(Eigen::Vector3f::UnitZ(), 1e-6)) {
+            x2 << -x1[1], x1[0], 0;
+        } else {
+            x2 << 0, x1[2], -x1[1];
+        }
         Eigen::Vector3f x3 = normal.cross(x2);
 
         x1 = x1.normalized();

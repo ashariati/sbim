@@ -6,14 +6,10 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /Grid1
-        - /TF1
         - /TF1/Frames1
         - /TF1/Tree1
-        - /PointCloud21
         - /MarkerArray1
         - /MarkerArray2
-        - /MarkerArray2/Status1
       Splitter Ratio: 0.5794117450714111
     Tree Height: 567
   - Class: rviz/Selection

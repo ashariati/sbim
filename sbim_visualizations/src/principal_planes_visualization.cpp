@@ -36,9 +36,10 @@ public:
             marker.type = visualization_msgs::Marker::TRIANGLE_LIST;
             marker.action = visualization_msgs::Marker::ADD;
 
+            float width = (p.label.data != "0") ? 10.0 : 4.0;
             std::vector<Eigen::Vector3f> triangles = sbim_visualizations::planeTriangles(
                     Eigen::Vector4f(p.plane.coef[0], p.plane.coef[1], p.plane.coef[2], p.plane.coef[3]),
-                    10.0, 3.0);
+                    width, 4.0);
             for (auto t : triangles) {
                 geometry_msgs::Point pt;
                 pt.x = t[0];
