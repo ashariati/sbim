@@ -26,11 +26,20 @@ PlaneDetector<PointCloud>::scanDirection(const PointCloud &point_cloud, const Ei
                                          int min_intensity,
                                          std::vector<float> &offsets, std::vector<double> &intensities) const {
 
-    Eigen::MatrixXf P = point_cloud.getMatrixXfMap();
-    Eigen::VectorXf distances = P * direction;
+    Eigen::Vector4f direction_hom = Eigen::Vector4f::Zero();
+    direction_hom.head(3) = direction;
 
-    std::vector<float> d(distances.data(), distances.data() + distances.size());
-    std::vector<int> counts = signal_1d::histogram_counts<float>(d, 0, range, 0.05);
+    Eigen::MatrixXf P = point_cloud.getMatrixXfMap();
+    Eigen::VectorXf d = P.transpose() * direction_hom;
+
+    std::vector<float> distances;
+    for (size_t i = 0; i < d.rows(); ++i) {
+        if (!isnan(d[i])) {
+            distances.push_back(d[i]);
+        }
+    }
+
+    std::vector<int> counts = signal_1d::histogram_counts<float>(distances, 0, range, 0.05);
 
     std::vector<float> peak_locs;
     std::vector<double> x(counts.begin(), counts.end());
