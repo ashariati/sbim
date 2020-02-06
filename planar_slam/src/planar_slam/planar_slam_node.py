@@ -2,6 +2,7 @@
 
 import threading
 import numpy as np
+import cvxpy as cp
 
 import rospy
 import message_filters
@@ -142,7 +143,11 @@ class PlanarSlamNode(object):
 
             # run optimizaiton
             self._lock.acquire(True)
-            self._optimizer.optimize()
+            try:
+                self._optimizer.optimize()
+            except cp.error.SolverError as e:
+                rospy.logwarn("Bad solve in occamsam : %s" % e.message)
+                continue
             self._optimizer.update()
             free_points = self._fg.free_points
             planes = self._fg.landmarks
