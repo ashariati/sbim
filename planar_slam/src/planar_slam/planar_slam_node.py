@@ -55,7 +55,7 @@ class PlanarSlamNode(object):
         # subscribers
         pose_sub = message_filters.Subscriber('/keyframe', PoseStamped)
         compass_sub = message_filters.Subscriber('/compass_transform', TransformStamped)
-        plane_sub = message_filters.Subscriber('/principal_planes', PrincipalPlaneArray)
+        plane_sub = message_filters.Subscriber('/planes', PrincipalPlaneArray)
         sync = message_filters.ApproximateTimeSynchronizer(
                 fs=[pose_sub, compass_sub, plane_sub], queue_size=10, slop=0.1)
         sync.registerCallback(self.callback)

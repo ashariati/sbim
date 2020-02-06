@@ -16,7 +16,7 @@ public:
     ~PrincipalPlanesVisualization() = default;
 
     PrincipalPlanesVisualization() : nh_("~") {
-        sub_ = nh_.subscribe<sbim_msgs::PrincipalPlaneArray>("/principal_planes", 1,
+        sub_ = nh_.subscribe<sbim_msgs::PrincipalPlaneArray>("/planes", 1,
                                                              boost::bind(&PrincipalPlanesVisualization::callback,
                                                                          this, _1));
         pub_ = nh_.advertise<visualization_msgs::MarkerArray>("principal_planes_viz", 0);

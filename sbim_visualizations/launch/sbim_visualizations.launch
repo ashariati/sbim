@@ -5,7 +5,7 @@
     </node>
 
     <node pkg="sbim_visualizations" type="principal_planes_visualization" name="principal_planes_visualization">
-        <remap from="/principal_planes" to="/plane_detector_node/principal_planes"/>
+        <remap from="/planes" to="/plane_detector_node/planes"/>
     </node>
 
 </launch>

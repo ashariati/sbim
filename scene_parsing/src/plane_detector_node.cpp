@@ -39,7 +39,7 @@ public:
         nh_.param<int>("min_intensity", min_intensity_, 1000);
 
         sync_.registerCallback(boost::bind(&PlaneDetectorNode::callback, this, _1, _2));
-        pub_ = nh_.advertise<sbim_msgs::PrincipalPlaneArray>("principal_planes", 10);
+        pub_ = nh_.advertise<sbim_msgs::PrincipalPlaneArray>("planes", 10);
 
     }
 
