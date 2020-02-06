@@ -144,7 +144,7 @@ Visualization Manager:
       Shaft Length: 0.23000000417232513
       Shaft Radius: 0.009999999776482582
       Shape: Arrow (Flat)
-      Topic: /trajectory
+      Topic: /planar_slam_node/trajectory
       Unreliable: false
       Value: true
   Enabled: true

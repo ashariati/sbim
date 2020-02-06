@@ -48,19 +48,20 @@ class PlanarSlamNode(object):
 
         # parameters
         self.freq = rospy.get_param('frequency', 5)
+        self.pose_window = rospy.get_param('pose_window', 10)
         self.sigma_t = rospy.get_param('odometry_noise', 0.01)
         self.sigma_d = rospy.get_param('observation_noise', 0.03)
 
         # subscribers
-        pose_sub = message_filters.Subscriber('/scan_aggregator/keyframe', PoseStamped)
-        compass_sub = message_filters.Subscriber('/point_cloud_compass_node/compass_transform', TransformStamped)
-        plane_sub = message_filters.Subscriber('/plane_detector_node/principal_planes', PrincipalPlaneArray)
+        pose_sub = message_filters.Subscriber('/keyframe', PoseStamped)
+        compass_sub = message_filters.Subscriber('/compass_transform', TransformStamped)
+        plane_sub = message_filters.Subscriber('/principal_planes', PrincipalPlaneArray)
         sync = message_filters.ApproximateTimeSynchronizer(
                 fs=[pose_sub, compass_sub, plane_sub], queue_size=10, slop=0.1)
         sync.registerCallback(self.callback)
 
         # publishers
-        self._traj_pub = rospy.Publisher('trajectory', PoseArray, queue_size=10)
+        self._traj_pub = rospy.Publisher('/planar_slam_node/trajectory', PoseArray, queue_size=10)
 
         # lock
         self._lock = threading.Lock()
@@ -69,7 +70,7 @@ class PlanarSlamNode(object):
         self._G_ws = np.eye(4)
         self._G_cs = np.eye(4)
         self._point_var = variable.PointVariable(3)
-        self._fg = factorgraph.GaussianFactorGraph(free_point_window=10*self.freq)
+        self._fg = factorgraph.GaussianFactorGraph(free_point_window=self.pose_window * self.freq)
         self._optimizer = optim.Occam(self._fg)
         self._is_init = False
 

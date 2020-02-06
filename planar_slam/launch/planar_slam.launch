@@ -1,0 +1,9 @@
+<launch>
+
+    <node pkg="planar_slam" name="planar_slam_node" type="planar_slam_node.py" output="screen">
+        <remap from="/keyframe" to="/scan_aggregator/keyframe" />
+        <remap from="/compass_transform" to="/point_cloud_compass_node/compass_transform" />
+        <remap from="/principal_planes" to="/plane_detector_node/principal_planes" />
+    </node>
+
+</launch>
