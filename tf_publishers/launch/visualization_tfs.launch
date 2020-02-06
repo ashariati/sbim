@@ -4,14 +4,14 @@
         <remap from="/keyframe" to="/scan_aggregator/keyframe"/>
     </node>
 
-    <!-- <node pkg="tf_publishers" type="compass_to_tf" name="compass_to_tf" output="screen">
+    <node pkg="tf_publishers" type="compass_to_tf" name="compass_to_tf" output="screen">
         <remap from="/compass_transform" to="/point_cloud_compass_node/compass_transform"/>
         <remap from="/keyframe" to="/scan_aggregator/keyframe"/>
-    </node> -->
+    </node>
 
-    <node pkg="tf_publishers" type="transform_to_tf" name="transform_to_tf" output="screen">
+    <!-- <node pkg="tf_publishers" type="transform_to_tf" name="transform_to_tf" output="screen">
         <remap from="/transform" to="/point_cloud_compass_node/compass_transform"/>
         <param name="flip_transform" value="true"/>
-    </node>
+    </node> -->
 
 </launch>

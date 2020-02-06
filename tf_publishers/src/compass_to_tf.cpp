@@ -5,6 +5,7 @@
 
 #include <ros/ros.h>
 #include <tf2_ros/transform_broadcaster.h>
+#include <tf2_ros/static_transform_broadcaster.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <eigen_conversions/eigen_msg.h>
@@ -18,17 +19,20 @@ typedef message_filters::sync_policies::ApproximateTime<geometry_msgs::PoseStamp
 class CompassToTFNode {
 
 private:
+
     ros::NodeHandle nh_;
+    bool is_first_;
 
     message_filters::Subscriber<geometry_msgs::TransformStamped> compass_transform_subscriber_;
     message_filters::Subscriber<geometry_msgs::PoseStamped> keyframe_pose_subscriber_;
     message_filters::Synchronizer<Policy> sync_;
 
     tf2_ros::TransformBroadcaster tf_broadcaster_;
+    tf2_ros::StaticTransformBroadcaster stf_broadcaster_;
 
 public:
 
-    CompassToTFNode() : nh_("~"),
+    CompassToTFNode() : nh_("~"), is_first_(true),
                         compass_transform_subscriber_(nh_, "/compass_transform", 1),
                         keyframe_pose_subscriber_(nh_, "/keyframe", 1),
                         sync_(Policy(10), keyframe_pose_subscriber_, compass_transform_subscriber_) {
@@ -56,14 +60,20 @@ public:
         // std::cout << std::endl;
 
         geometry_msgs::TransformStamped transform;
+        tf::transformEigenToMsg(G_wc, transform.transform);
         transform.header.stamp = pose_msg->header.stamp;
-        // transform.header.stamp = ros::Time::now();
         transform.header.frame_id = pose_msg->header.frame_id;
         transform.child_frame_id = transform_msg->header.frame_id;
-
-        tf::transformEigenToMsg(G_wc, transform.transform);
-
         tf_broadcaster_.sendTransform(transform);
+
+        if (is_first_) {
+
+            transform.header.frame_id = pose_msg->header.frame_id;
+            transform.child_frame_id = "building";
+            stf_broadcaster_.sendTransform(transform);
+            is_first_ = false;
+
+        }
 
     }
 
