@@ -8,7 +8,7 @@ import message_filters
 import tf
 from tf import transformations
 import geometry_msgs.msg
-from geometry_msgs.msg import PoseStamped, TransformStamped
+from geometry_msgs.msg import Pose, PoseArray, PoseStamped, TransformStamped
 
 import sbim_msgs.msg
 from sbim_msgs.msg import PrincipalPlaneArray
@@ -59,10 +59,13 @@ class PlanarSlamNode(object):
                 fs=[pose_sub, compass_sub, plane_sub], queue_size=10, slop=0.1)
         sync.registerCallback(self.callback)
 
+        # publishers
+        self._traj_pub = rospy.Publisher('trajectory', PoseArray, queue_size=10)
+
         # lock
         self._lock = threading.Lock()
 
-        # initialize members 
+        # initialize members
         self._G_ws = np.eye(4)
         self._G_cs = np.eye(4)
         self._point_var = variable.PointVariable(3)
@@ -99,7 +102,7 @@ class PlanarSlamNode(object):
         # generate odometry factor
         point_var = variable.PointVariable(3)
         odom_factor = factor.OdometryFactor(self._point_var, point_var, 
-                self._G_cs[:3, :3], t_s, self.sigma_t*np.eye(3))
+                self._G_cs[:3, :3], t_s, self.sigma_t*np.ones(3))
 
         # generate observation factors
         obsv_factors = []
@@ -108,7 +111,7 @@ class PlanarSlamNode(object):
             plane_var = variable.LandmarkVariable(1, plane.label.data, plane.intensity.data)
             v_c = np.array([[plane.plane.coef[0], plane.plane.coef[1], plane.plane.coef[2]]])
             d_c = plane.plane.coef[3]
-            plane_factor = factor.ObservationFactor(point_var, plane_var, v_c, d_c, sigma=self.sigma_d)
+            plane_factor = factor.ObservationFactor(point_var, plane_var, v_c, d_c, np.array([self.sigma_d]))
             obsv_factors.append(plane_factor)
 
         # insert into factorgraph
@@ -140,8 +143,25 @@ class PlanarSlamNode(object):
             self._lock.acquire(True)
             self._optimizer.optimize()
             self._optimizer.update()
-            print('Points = {:}, Landmarks = {:}'.format(len(self._fg.free_points), len(self._fg.landmarks)))
+            free_points = self._fg.free_points
+            planes = self._fg.landmarks
             self._lock.release()
+
+            # publish pose array
+            pose_array = PoseArray()
+            pose_array.header.frame_id = 'building'
+            pose_array.header.stamp = rospy.Time.now()
+            for point in free_points:
+                pose = Pose()
+                pose.position.x = point.position[0]
+                pose.position.y = point.position[1]
+                pose.position.z = point.position[2]
+                pose.orientation.x = 0
+                pose.orientation.y = 0
+                pose.orientation.z = 0
+                pose.orientation.w = 1
+                pose_array.poses.append(pose)
+            self._traj_pub.publish(pose_array)
 
 
 if __name__ == '__main__':
