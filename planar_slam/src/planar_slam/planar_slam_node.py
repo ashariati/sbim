@@ -10,9 +10,11 @@ import tf
 from tf import transformations
 import geometry_msgs.msg
 from geometry_msgs.msg import Pose, PoseArray, PoseStamped, TransformStamped
+import std_msgs.msg
+from std_msgs.msg import String
 
 import sbim_msgs.msg
-from sbim_msgs.msg import PrincipalPlaneArray, PrincipalPlane
+from sbim_msgs.msg import PrincipalPlaneArray, PrincipalPlane, CorrespondenceMap
 
 import occamsam
 from occamsam import variable, factor, factorgraph, optim
@@ -68,6 +70,7 @@ class PlanarSlamNode(object):
         # publishers
         self._traj_pub = rospy.Publisher('/planar_slam_node/trajectory', PoseArray, queue_size=10)
         self._layout_pub = rospy.Publisher('/planar_slam_node/layout_planes', PrincipalPlaneArray, queue_size=10)
+        self._cmap_pub = rospy.Publisher('/planar_slam_node/correspondence_map', CorrespondenceMap, queue_size=10)
 
         # lock
         self._lock = threading.Lock()
@@ -200,6 +203,19 @@ class PlanarSlamNode(object):
                 plane.id.data = self._var_id_map[plane_parent_map[lp]]
                 b_plane_array.planes.append(plane)
             self._layout_pub.publish(b_plane_array)
+
+            # publish correspondence map
+            correspondence_map = CorrespondenceMap()
+            correspondence_map.header.frame_id = 'building'
+            correspondence_map.header.stamp = now
+            for (k, v) in list(plane_parent_map.items()):
+                k_str = String()
+                v_str = String()
+                k_str.data = self._var_id_map[k]
+                v_str.data = self._var_id_map[v]
+                correspondence_map.plane_ids.append(k_str)
+                correspondence_map.parent_ids.append(v_str)
+            self._cmap_pub.publish(correspondence_map)
 
 
 if __name__ == '__main__':
