@@ -125,10 +125,10 @@ Visualization Manager:
       Value: true
     - Class: rviz/MarkerArray
       Enabled: true
-      Marker Topic: /principal_planes_visualization/principal_planes_viz
+      Marker Topic: /layout_planes_visualization/principal_planes_viz
       Name: MarkerArray
       Namespaces:
-        principal_planes: true
+        layout_planes: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -183,14 +183,14 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.7534945011138916
+      Pitch: 0.5184944868087769
       Position:
-        X: -2.326690912246704
-        Y: 7.544212818145752
-        Z: 8.358654022216797
-      Target Frame: compass
+        X: -13.345725059509277
+        Y: 20.718137741088867
+        Z: 17.733055114746094
+      Target Frame: building
       Value: FPS (rviz)
-      Yaw: 5.11562967300415
+      Yaw: 5.265631675720215
     Saved: ~
 Window Geometry:
   Displays:

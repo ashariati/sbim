@@ -12,7 +12,7 @@ import geometry_msgs.msg
 from geometry_msgs.msg import Pose, PoseArray, PoseStamped, TransformStamped
 
 import sbim_msgs.msg
-from sbim_msgs.msg import PrincipalPlaneArray
+from sbim_msgs.msg import PrincipalPlaneArray, PrincipalPlane
 
 import occamsam
 from occamsam import variable, factor, factorgraph, optim
@@ -57,23 +57,31 @@ class PlanarSlamNode(object):
         pose_sub = message_filters.Subscriber('/keyframe', PoseStamped)
         compass_sub = message_filters.Subscriber('/compass_transform', TransformStamped)
         plane_sub = message_filters.Subscriber('/planes', PrincipalPlaneArray)
+        # pose_sub = message_filters.Subscriber('/scan_aggregator/keyframe', PoseStamped)
+        # compass_sub = message_filters.Subscriber('/point_cloud_compass_node/compass_transform', TransformStamped)
+        # plane_sub = message_filters.Subscriber('/plane_detector_node/planes', PrincipalPlaneArray)
         sync = message_filters.ApproximateTimeSynchronizer(
                 fs=[pose_sub, compass_sub, plane_sub], queue_size=10, slop=0.1)
         sync.registerCallback(self.callback)
 
         # publishers
         self._traj_pub = rospy.Publisher('/planar_slam_node/trajectory', PoseArray, queue_size=10)
+        self._layout_pub = rospy.Publisher('/planar_slam_node/layout_planes', PrincipalPlaneArray, queue_size=10)
 
         # lock
         self._lock = threading.Lock()
 
-        # initialize members
+        # initialize members for optimization
         self._G_ws = np.eye(4)
         self._G_cs = np.eye(4)
         self._point_var = variable.PointVariable(3)
         self._fg = factorgraph.GaussianFactorGraph(free_point_window=self.pose_window * self.freq)
         self._optimizer = optim.Occam(self._fg)
         self._is_init = False
+
+        # intialize bookkeepers
+        self._label_orientation_map = {}
+        self._var_id_map = {}
 
 
     def callback(self, pose_ws, transform_cs, c_plane_array):
@@ -116,6 +124,11 @@ class PlanarSlamNode(object):
             plane_factor = factor.ObservationFactor(point_var, plane_var, v_c, d_c, np.array([self.sigma_d]))
             obsv_factors.append(plane_factor)
 
+            # bookkeeping
+            self._var_id_map[plane_var] = plane.id.data
+            if plane.label.data not in self._label_orientation_map:
+                self._label_orientation_map[plane.label.data] = v_c
+
         # insert into factorgraph
         factor_list = [odom_factor] + obsv_factors
         self._lock.acquire(True)
@@ -150,13 +163,16 @@ class PlanarSlamNode(object):
                 continue
             self._optimizer.update()
             free_points = self._fg.free_points
-            planes = self._fg.landmarks
+            layout_planes = self._fg.landmarks
+            parent_plane_map = self._fg.correspondence_map.root_map()
             self._lock.release()
+
+            now = rospy.Time.now()
 
             # publish pose array
             pose_array = PoseArray()
             pose_array.header.frame_id = 'building'
-            pose_array.header.stamp = rospy.Time.now()
+            pose_array.header.stamp = now
             for point in free_points:
                 pose = Pose()
                 pose.position.x = point.position[0]
@@ -168,6 +184,20 @@ class PlanarSlamNode(object):
                 pose.orientation.w = 1
                 pose_array.poses.append(pose)
             self._traj_pub.publish(pose_array)
+
+            # publish planes
+            b_plane_array = PrincipalPlaneArray()
+            b_plane_array.header.frame_id = 'building'
+            b_plane_array.header.stamp = now
+            for lp in layout_planes:
+                plane = PrincipalPlane()
+                plane.plane.coef[:3] = self._label_orientation_map[lp.class_label][0]
+                plane.plane.coef[3] = lp.position
+                plane.intensity.data = lp.mass   # TODO: Combine landmark masses on merges within OccamSAM
+                plane.label.data = lp.class_label
+                plane.id.data = self._var_id_map[parent_plane_map[lp]]
+                b_plane_array.planes.append(plane)
+            self._layout_pub.publish(b_plane_array)
 
 
 if __name__ == '__main__':

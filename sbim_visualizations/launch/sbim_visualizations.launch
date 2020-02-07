@@ -4,8 +4,17 @@
         <remap from="/principal_directions" to="/point_cloud_compass_node/principal_directions"/>
     </node>
 
-    <node pkg="sbim_visualizations" type="principal_planes_visualization" name="principal_planes_visualization">
+    <node pkg="sbim_visualizations" type="principal_planes_visualization" name="local_planes_visualization">
+        <param name="marker_ns" value="local_planes" />
         <remap from="/planes" to="/plane_detector_node/planes"/>
+    </node>
+
+    <node pkg="sbim_visualizations" type="principal_planes_visualization" name="layout_planes_visualization">
+        <param name="marker_ns" value="layout_planes" />
+        <param name="red" value="0.0" />
+        <param name="green" value="0.75" />
+        <param name="blue" value="1.0" />
+        <remap from="/planes" to="/planar_slam_node/layout_planes"/>
     </node>
 
 </launch>

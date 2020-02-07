@@ -11,11 +11,30 @@
 
 class PrincipalPlanesVisualization {
 
+private:
+
+    ros::NodeHandle nh_;
+    ros::Subscriber sub_;
+    ros::Publisher pub_;
+
+    std::string marker_ns_;
+    float a_;
+    float r_;
+    float g_;
+    float b_;
+
 public:
 
     ~PrincipalPlanesVisualization() = default;
 
-    PrincipalPlanesVisualization() : nh_("~") {
+    PrincipalPlanesVisualization() : nh_("~"), marker_ns_(""), a_(0), r_(0), g_(0), b_(0) {
+
+        nh_.param<std::string>("marker_ns", marker_ns_, "principal_planes");
+        nh_.param<float>("alpha", a_, 1.0);
+        nh_.param<float>("red", r_, 1.0);
+        nh_.param<float>("green", g_, 0.75);
+        nh_.param<float>("blue", b_, 0.0);
+
         sub_ = nh_.subscribe<sbim_msgs::PrincipalPlaneArray>("/planes", 1,
                                                              boost::bind(&PrincipalPlanesVisualization::callback,
                                                                          this, _1));
@@ -31,7 +50,7 @@ public:
             visualization_msgs::Marker marker;
             marker.header.frame_id = planes->header.frame_id;
             marker.header.stamp = ros::Time();
-            marker.ns = "principal_planes";
+            marker.ns = marker_ns_;
             marker.id = id;
             marker.type = visualization_msgs::Marker::TRIANGLE_LIST;
             marker.action = visualization_msgs::Marker::ADD;
@@ -57,10 +76,10 @@ public:
             marker.scale.y = 1.0;
             marker.scale.z = 1.0;
 
-            marker.color.a = 1.0;
-            marker.color.r = 1.0;
-            marker.color.g = 0.75;
-            marker.color.b = 0.0;
+            marker.color.a = a_;
+            marker.color.r = r_;
+            marker.color.g = g_;
+            marker.color.b = b_;
 
             marker_array.markers.push_back(marker);
 
@@ -70,12 +89,6 @@ public:
         pub_.publish(marker_array);
 
     }
-
-private:
-
-    ros::NodeHandle nh_;
-    ros::Subscriber sub_;
-    ros::Publisher pub_;
 
 };
 
