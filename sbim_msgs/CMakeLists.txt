@@ -53,6 +53,7 @@ add_message_files(
         PrincipalDirectionArray.msg
         PrincipalPlaneArray.msg
         PrincipalPlane.msg
+        CorrespondenceMap.msg
 )
 
 ## Generate services in the 'srv' folder
