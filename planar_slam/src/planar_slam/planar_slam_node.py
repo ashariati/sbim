@@ -158,14 +158,15 @@ class PlanarSlamNode(object):
             self._lock.acquire(True)
             try:
                 self._optimizer.optimize()
+                self._optimizer.update()
             except cp.error.SolverError as e:
                 rospy.logwarn("Bad solve in occamsam : %s" % e.message)
-                continue
-            self._optimizer.update()
-            free_points = self._fg.free_points
-            layout_planes = self._fg.landmarks
-            parent_plane_map = self._fg.correspondence_map.root_map()
-            self._lock.release()
+            finally:
+                free_points = self._fg.free_points
+                layout_planes = self._fg.landmarks
+                plane_parent_map = self._fg.correspondence_map.root_map()
+                plane_group_map = self._fg.correspondence_map.set_map()
+                self._lock.release()
 
             now = rospy.Time.now()
 
@@ -193,9 +194,9 @@ class PlanarSlamNode(object):
                 plane = PrincipalPlane()
                 plane.plane.coef[:3] = self._label_orientation_map[lp.class_label][0]
                 plane.plane.coef[3] = lp.position
-                plane.intensity.data = lp.mass   # TODO: Combine landmark masses on merges within OccamSAM
+                plane.intensity.data = np.sum([k.mass for k in plane_group_map[lp]])
                 plane.label.data = lp.class_label
-                plane.id.data = self._var_id_map[parent_plane_map[lp]]
+                plane.id.data = self._var_id_map[plane_parent_map[lp]]
                 b_plane_array.planes.append(plane)
             self._layout_pub.publish(b_plane_array)
 
