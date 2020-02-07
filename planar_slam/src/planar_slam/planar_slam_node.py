@@ -52,6 +52,7 @@ class PlanarSlamNode(object):
         self.pose_window = rospy.get_param('pose_window', 10)
         self.sigma_t = rospy.get_param('odometry_noise', 0.01)
         self.sigma_d = rospy.get_param('observation_noise', 0.03)
+        assoc_range = rospy.get_param('association_range', 0.5)
 
         # subscribers
         pose_sub = message_filters.Subscriber('/keyframe', PoseStamped)
@@ -76,7 +77,7 @@ class PlanarSlamNode(object):
         self._G_cs = np.eye(4)
         self._point_var = variable.PointVariable(3)
         self._fg = factorgraph.GaussianFactorGraph(free_point_window=self.pose_window * self.freq)
-        self._optimizer = optim.Occam(self._fg)
+        self._optimizer = optim.Occam(self._fg, assoc_range=assoc_range)
         self._is_init = False
 
         # intialize bookkeepers
