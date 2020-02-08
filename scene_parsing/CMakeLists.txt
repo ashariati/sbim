@@ -8,6 +8,9 @@ project(scene_parsing)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+        vision_msgs
+        pcl_conversions
+        pcl_ros
         eigen_conversions
         message_filters
         pcl_ros
@@ -141,6 +144,7 @@ include_directories(
 # add_executable(${PROJECT_NAME}_node src/scene_parsing_node.cpp)
 
 add_executable(plane_detector_node src/plane_detector_node.cpp)
+add_executable(layout_extractor_node src/layout_extractor_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -152,6 +156,7 @@ add_executable(plane_detector_node src/plane_detector_node.cpp)
 ## same as for the library above
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(plane_detector_node ${catkin_EXPORTED_TARGETS})
+add_dependencies(layout_extractor_node ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node
@@ -159,6 +164,9 @@ add_dependencies(plane_detector_node ${catkin_EXPORTED_TARGETS})
 # )
 
 target_link_libraries(plane_detector_node
+        ${catkin_LIBRARIES}
+        )
+target_link_libraries(layout_extractor_node
         ${catkin_LIBRARIES}
         )
 

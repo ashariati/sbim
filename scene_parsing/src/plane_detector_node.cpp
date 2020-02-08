@@ -18,6 +18,23 @@ typedef message_filters::sync_policies::ApproximateTime<PointCloud, sbim_msgs::P
 
 class PlaneDetectorNode {
 
+    ros::NodeHandle nh_;
+    message_filters::Subscriber<PointCloud> pc_sub_;
+    message_filters::Subscriber<sbim_msgs::PrincipalDirectionArray> pd_sub_;
+    message_filters::Synchronizer<Policy> sync_;
+    ros::Publisher pub_;
+
+    int frequency_{};
+    int queue_size_{};
+    std::deque<std::tuple<PointCloud, sbim_msgs::PrincipalDirectionArray>> message_queue_;
+
+    PlaneDetector<PointCloud> plane_detector_;
+
+    size_t plane_count_;
+    int min_intensity_{};
+    float scan_range_{};
+
+
 public:
 
     ~PlaneDetectorNode() = default;
@@ -128,24 +145,6 @@ public:
         }
 
     }
-
-private:
-
-    ros::NodeHandle nh_;
-    message_filters::Subscriber<PointCloud> pc_sub_;
-    message_filters::Subscriber<sbim_msgs::PrincipalDirectionArray> pd_sub_;
-    message_filters::Synchronizer<Policy> sync_;
-    ros::Publisher pub_;
-
-    int frequency_{};
-    int queue_size_{};
-    std::deque<std::tuple<PointCloud, sbim_msgs::PrincipalDirectionArray>> message_queue_;
-
-    PlaneDetector<PointCloud> plane_detector_;
-
-    size_t plane_count_;
-    int min_intensity_{};
-    float scan_range_{};
 
 };
 

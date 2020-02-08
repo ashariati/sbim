@@ -10,6 +10,7 @@ project(sbim_msgs)
 find_package(catkin REQUIRED COMPONENTS
         message_generation
         shape_msgs
+        sensor_msgs
         geometry_msgs
         std_msgs
         )
@@ -54,6 +55,8 @@ add_message_files(
         PrincipalPlaneArray.msg
         PrincipalPlane.msg
         CorrespondenceMap.msg
+        LayoutSegment.msg
+        LayoutSegmentArray.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -74,6 +77,7 @@ add_message_files(
 generate_messages(
         DEPENDENCIES
         shape_msgs
+        sensor_msgs
         geometry_msgs
         std_msgs
 )
@@ -110,7 +114,7 @@ generate_messages(
 catkin_package(
         #  INCLUDE_DIRS include
         #  LIBRARIES sbim_msgs
-        CATKIN_DEPENDS message_runtime shape_msgs geometry_msgs std_msgs
+        CATKIN_DEPENDS message_runtime shape_msgs sensor_msgs geometry_msgs std_msgs
         #  DEPENDS system_lib
 )
 
