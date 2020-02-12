@@ -41,12 +41,12 @@ namespace sbim_visualizations {
 
         std::vector<Eigen::Vector3f> base_vertices;
 
-        base_vertices.emplace_back(coef[3], width / 2, height / 2);
-        base_vertices.emplace_back(coef[3], -width / 2, -height / 2);
-        base_vertices.emplace_back(coef[3], width / 2, -height / 2);
-        base_vertices.emplace_back(coef[3], width / 2, height / 2);
-        base_vertices.emplace_back(coef[3], -width / 2, height / 2);
-        base_vertices.emplace_back(coef[3], -width / 2, -height / 2);
+        base_vertices.emplace_back(-coef[3], width / 2, height / 2);
+        base_vertices.emplace_back(-coef[3], -width / 2, -height / 2);
+        base_vertices.emplace_back(-coef[3], width / 2, -height / 2);
+        base_vertices.emplace_back(-coef[3], width / 2, height / 2);
+        base_vertices.emplace_back(-coef[3], -width / 2, height / 2);
+        base_vertices.emplace_back(-coef[3], -width / 2, -height / 2);
 
         std::vector<Eigen::Vector3f> vertices;
         Eigen::Vector3f normal(coef[0], coef[1], coef[2]);

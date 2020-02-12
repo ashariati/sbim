@@ -114,7 +114,7 @@ public:
                     plane.coef[0] = v[0];
                     plane.coef[1] = v[1];
                     plane.coef[2] = v[2];
-                    plane.coef[3] = offsets[i];
+                    plane.coef[3] = -offsets[i];
 
                     std_msgs::Float64 plane_intensity;
                     plane_intensity.data = intensities[i];

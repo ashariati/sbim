@@ -124,7 +124,7 @@ class PlanarSlamNode(object):
 
             plane_var = variable.LandmarkVariable(1, plane.label.data, plane.intensity.data)
             v_c = np.array([[plane.plane.coef[0], plane.plane.coef[1], plane.plane.coef[2]]])
-            d_c = plane.plane.coef[3]
+            d_c = -plane.plane.coef[3]
             plane_factor = factor.ObservationFactor(point_var, plane_var, v_c, d_c, np.array([self.sigma_d]))
             obsv_factors.append(plane_factor)
 
@@ -197,7 +197,7 @@ class PlanarSlamNode(object):
             for lp in layout_planes:
                 plane = PrincipalPlane()
                 plane.plane.coef[:3] = self._label_orientation_map[lp.class_label][0]
-                plane.plane.coef[3] = lp.position
+                plane.plane.coef[3] = -lp.position
                 plane.intensity.data = np.sum([k.mass for k in plane_group_map[lp]])
                 plane.label.data = lp.class_label
                 plane.id.data = self._var_id_map[plane_parent_map[lp]]
