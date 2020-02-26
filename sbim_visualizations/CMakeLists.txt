@@ -140,6 +140,7 @@ include_directories(
 
 add_executable(principal_directions_visualization src/principal_directions_visualization.cpp)
 add_executable(principal_planes_visualization src/principal_planes_visualization.cpp)
+add_executable(trajectory_visualization src/trajectory_visualization.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -152,6 +153,7 @@ add_executable(principal_planes_visualization src/principal_planes_visualization
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(principal_directions_visualization ${catkin_EXPORTED_TARGETS})
 add_dependencies(principal_planes_visualization ${catkin_EXPORTED_TARGETS})
+add_dependencies(trajectory_visualization ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node
@@ -162,6 +164,9 @@ target_link_libraries(principal_directions_visualization
         ${catkin_LIBRARIES}
         )
 target_link_libraries(principal_planes_visualization
+        ${catkin_LIBRARIES}
+        )
+target_link_libraries(trajectory_visualization
         ${catkin_LIBRARIES}
         )
 

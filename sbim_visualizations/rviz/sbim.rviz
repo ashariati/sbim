@@ -10,7 +10,6 @@ Panels:
         - /TF1/Tree1
         - /MarkerArray1
         - /MarkerArray2
-        - /PoseArray1
       Splitter Ratio: 0.5794117450714111
     Tree Height: 567
   - Class: rviz/Selection
@@ -31,7 +30,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: PointCloud2
+    SyncSource: ""
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -62,27 +61,13 @@ Visualization Manager:
       Frame Timeout: 30
       Frames:
         All Enabled: false
-        building:
-          Value: true
-        compass:
-          Value: true
-        local:
-          Value: true
-        vehicle:
-          Value: false
       Marker Scale: 1
       Name: TF
       Show Arrows: true
       Show Axes: true
       Show Names: true
       Tree:
-        local:
-          building:
-            {}
-          compass:
-            {}
-          vehicle:
-            {}
+        {}
       Update Interval: 0
       Value: true
     - Alpha: 0.800000011920929
@@ -120,7 +105,7 @@ Visualization Manager:
       Marker Topic: /principal_directions_visualization/principal_direction_viz
       Name: MarkerArray
       Namespaces:
-        principal_directions: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -128,24 +113,8 @@ Visualization Manager:
       Marker Topic: /layout_planes_visualization/principal_planes_viz
       Name: MarkerArray
       Namespaces:
-        layout_planes: true
+        {}
       Queue Size: 100
-      Value: true
-    - Alpha: 1
-      Arrow Length: 0.30000001192092896
-      Axes Length: 0.30000001192092896
-      Axes Radius: 0.009999999776482582
-      Class: rviz/PoseArray
-      Color: 255; 25; 0
-      Enabled: true
-      Head Length: 0.07000000029802322
-      Head Radius: 0.029999999329447746
-      Name: PoseArray
-      Shaft Length: 0.23000000417232513
-      Shaft Radius: 0.009999999776482582
-      Shape: Arrow (Flat)
-      Topic: /planar_slam_node/trajectory
-      Unreliable: false
       Value: true
   Enabled: true
   Global Options:

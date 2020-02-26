@@ -17,4 +17,8 @@
         <remap from="/planes" to="/planar_slam_node/layout_planes"/>
     </node>
 
+    <node pkg="sbim_visualizations" type="trajectory_visualization" name="trajectory_visualization">
+        <remap from="/trajectory" to="/planar_slam_node/trajectory"/>
+    </node>
+
 </launch>

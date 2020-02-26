@@ -9,12 +9,12 @@ import message_filters
 import tf
 from tf import transformations
 import geometry_msgs.msg
-from geometry_msgs.msg import Pose, PoseArray, PoseStamped, TransformStamped
+from geometry_msgs.msg import PoseStamped, TransformStamped
 import std_msgs.msg
 from std_msgs.msg import String
 
 import sbim_msgs.msg
-from sbim_msgs.msg import PrincipalPlaneArray, PrincipalPlane, CorrespondenceMap
+from sbim_msgs.msg import PrincipalPlaneArray, PrincipalPlane, CorrespondenceMap, Trajectory
 
 import occamsam
 from occamsam import variable, factor, factorgraph, optim
@@ -68,7 +68,7 @@ class PlanarSlamNode(object):
         sync.registerCallback(self.callback)
 
         # publishers
-        self._traj_pub = rospy.Publisher('/planar_slam_node/trajectory', PoseArray, queue_size=10)
+        self._traj_pub = rospy.Publisher('/planar_slam_node/trajectory', Trajectory, queue_size=10)
         self._layout_pub = rospy.Publisher('/planar_slam_node/layout_planes', PrincipalPlaneArray, queue_size=10)
         self._cmap_pub = rospy.Publisher('/planar_slam_node/correspondence_map', CorrespondenceMap, queue_size=10)
 
@@ -86,6 +86,7 @@ class PlanarSlamNode(object):
         # intialize bookkeepers
         self._label_orientation_map = {}
         self._var_id_map = {}
+        self._point_stamp_map = {}
 
 
     def callback(self, pose_ws, transform_cs, c_plane_array):
@@ -105,6 +106,8 @@ class PlanarSlamNode(object):
             t0 = transformations.translation_from_matrix(G_ws)
             prior_factor = factor.PriorFactor(self._point_var, np.eye(3), t0, 1e-6*np.ones(3))
             self._fg.add_factor(prior_factor)
+
+            self._point_stamp_map[self._point_var] = pose_ws.header.stamp
 
             self._is_init = True
             return
@@ -145,6 +148,9 @@ class PlanarSlamNode(object):
         self._G_cs = G_cs
         self._point_var = point_var
 
+        # save point timestamp
+        self._point_stamp_map[point_var] = pose_ws.header.stamp
+
 
     def loop(self):
     
@@ -175,18 +181,18 @@ class PlanarSlamNode(object):
             now = rospy.Time.now()
 
             # publish pose array
-            pose_array = PoseArray()
-            pose_array.header.frame_id = 'building'
-            pose_array.header.stamp = now
+            pose_array = Trajectory()
             for point in free_points:
-                pose = Pose()
-                pose.position.x = point.position[0]
-                pose.position.y = point.position[1]
-                pose.position.z = point.position[2]
-                pose.orientation.x = 0
-                pose.orientation.y = 0
-                pose.orientation.z = 0
-                pose.orientation.w = 1
+                pose = PoseStamped()
+                pose.header.frame_id = 'building'
+                pose.header.stamp = self._point_stamp_map[point]
+                pose.pose.position.x = point.position[0]
+                pose.pose.position.y = point.position[1]
+                pose.pose.position.z = point.position[2]
+                pose.pose.orientation.x = 0
+                pose.pose.orientation.y = 0
+                pose.pose.orientation.z = 0
+                pose.pose.orientation.w = 1
                 pose_array.poses.append(pose)
             self._traj_pub.publish(pose_array)
 

@@ -57,6 +57,7 @@ add_message_files(
         CorrespondenceMap.msg
         LayoutSegment.msg
         LayoutSegmentArray.msg
+        Trajectory.msg
 )
 
 ## Generate services in the 'srv' folder
