@@ -182,6 +182,8 @@ class PlanarSlamNode(object):
 
             # publish pose array
             pose_array = Trajectory()
+            pose_array.header.frame_id = 'building'
+            pose_array.header.stamp = now
             for point in free_points:
                 pose = PoseStamped()
                 pose.header.frame_id = 'building'

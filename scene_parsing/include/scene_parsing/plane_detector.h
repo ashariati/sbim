@@ -8,23 +8,24 @@
 #include <eigen3/Eigen/Core>
 #include <scene_parsing/signal_1d.h>
 
-template<typename PointCloud>
 class PlaneDetector {
 
 public:
 
     ~PlaneDetector() = default;
 
-    void scanDirection(const PointCloud &point_cloud, const Eigen::Vector3f &direction, float range, int min_intensity,
+    template<typename PointT>
+    void scanDirection(const pcl::PointCloud<PointT> &point_cloud, const Eigen::Vector3f &direction, float range,
+                       int min_intensity,
                        std::vector<float> &offsets, std::vector<double> &intensities) const;
 
 };
 
-template<typename PointCloud>
+template<typename PointT>
 void
-PlaneDetector<PointCloud>::scanDirection(const PointCloud &point_cloud, const Eigen::Vector3f &direction, float range,
-                                         int min_intensity,
-                                         std::vector<float> &offsets, std::vector<double> &intensities) const {
+PlaneDetector::scanDirection(const pcl::PointCloud<PointT> &point_cloud, const Eigen::Vector3f &direction, float range,
+                             int min_intensity,
+                             std::vector<float> &offsets, std::vector<double> &intensities) const {
 
     Eigen::Vector4f direction_hom = Eigen::Vector4f::Zero();
     direction_hom.head(3) = direction;

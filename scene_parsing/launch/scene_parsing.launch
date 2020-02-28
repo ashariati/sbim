@@ -7,4 +7,9 @@
         <param name="min_intensity" value="8000.0"/>
     </node>
 
+    <node pkg="scene_parsing" type="layout_extractor_node" name="layout_extractor_node" output="screen">
+        <remap from="/transformed_scan" to="/point_cloud_compass_node/transformed_scan" />
+        <remap from="/layout_planes" to="/plane_detector_node/planes" />
+    </node>
+
 </launch>

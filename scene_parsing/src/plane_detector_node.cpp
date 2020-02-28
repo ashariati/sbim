@@ -28,7 +28,7 @@ class PlaneDetectorNode {
     int queue_size_{};
     std::deque<std::tuple<PointCloud, sbim_msgs::PrincipalDirectionArray>> message_queue_;
 
-    PlaneDetector<PointCloud> plane_detector_;
+    PlaneDetector plane_detector_;
 
     size_t plane_count_;
     int min_intensity_{};
@@ -79,7 +79,7 @@ public:
             rate.sleep();
             ros::spinOnce();
 
-            if (message_queue_.size() < 1) {
+            if (message_queue_.empty()) {
                 continue;
             }
 
@@ -104,8 +104,8 @@ public:
 
                 std::vector<float> offsets;
                 std::vector<double> intensities;
-                plane_detector_.scanDirection(P, v, scan_range_, min_intensity_,
-                                              offsets, intensities);
+                plane_detector_.scanDirection<pcl::PointXYZ>(P, v, scan_range_, min_intensity_,
+                                                             offsets, intensities);
 
                 for (size_t i = 0; i < offsets.size(); ++i) {
 
