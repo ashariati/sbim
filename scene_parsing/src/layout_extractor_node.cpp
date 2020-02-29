@@ -35,7 +35,7 @@ class LayoutExtractorNode {
     int queue_size_;
 
     layout_extractor::ExtractorParams extractor_params_;
-    layout_extractor::SummarizerParams summarizer_params_;
+    double boundary_alpha_;
     double filter_leaf_size_;
 
 public:
@@ -59,8 +59,6 @@ public:
 
         nh_.param<double>("filter_leaf_size", filter_leaf_size_, 0.02);
 
-        nh_.param<double>("boundary_alpha", summarizer_params_.alpha, 0.1);
-
         object_pub_ = nh_.advertise<vision_msgs::Detection3DArray>("objects", 10);
         segment_pub_ = nh_.advertise<sbim_msgs::LayoutSegmentArray>("layout_segments", 10);
         cloud_pub_ = nh_.advertise<PointCloud>("cloud_segments", 10);
@@ -82,7 +80,7 @@ public:
     void loop() {
 
         layout_extractor::LayoutExtractor extractor(extractor_params_);
-        layout_extractor::LayoutSummarizer summarizer(summarizer_params_);
+        layout_extractor::LayoutSummarizer summarizer;
 
         ros::Rate rate(frequency_);
         while (ros::ok()) {

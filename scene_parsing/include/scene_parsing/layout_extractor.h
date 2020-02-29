@@ -212,23 +212,15 @@ namespace layout_extractor {
 
     }
 
-    struct SummarizerParams {
-        double alpha;
-    };
-
     class LayoutSummarizer {
-
-        SummarizerParams params_;
 
     public:
 
         ~LayoutSummarizer() = default;
 
-        LayoutSummarizer(SummarizerParams &params) : params_(params) {}
-
         template<typename PointT>
         std::vector<std::vector<double>>
-        concaveSummary(const pcl::PointCloud<PointT> &point_cloud) const {
+        concaveSummary(const pcl::PointCloud<PointT> &point_cloud, const double alpha) const {
 
             typename pcl::PointCloud<PointT>::Ptr cloud_ptr(new pcl::PointCloud<PointT>);
             *cloud_ptr = point_cloud;
@@ -236,7 +228,7 @@ namespace layout_extractor {
             typename pcl::PointCloud<PointT>::Ptr hull_cloud(new pcl::PointCloud<PointT>);
             pcl::ConcaveHull<PointT> concave_hull;
             concave_hull.setInputCloud(cloud_ptr);
-            concave_hull.setAlpha(params_.alpha);
+            concave_hull.setAlpha(alpha);
             concave_hull.reconstruct(hull_cloud);
 
             std::vector<std::vector<double>> hull_vertices;
