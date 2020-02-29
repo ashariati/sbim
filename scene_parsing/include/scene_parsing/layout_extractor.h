@@ -267,9 +267,9 @@ namespace layout_extractor {
             std::vector<std::vector<double>> vertices = std::vector<std::vector<double>>(4, std::vector<double>(3, 0));
             for (size_t i = 0; i < 4; ++i) {
 
-                double x = ((R(0, 0) * vertices[i][0]) + (R(0, 1) * vertices[i][1])) + centroid(0);
-                double y = ((R(1, 0) * vertices[i][0]) + (R(1, 1) * vertices[i][1])) + centroid(1);
-                double z = ((R(2, 0) * vertices[i][0]) + (R(2, 1) * vertices[i][1])) + centroid(2);
+                double x = ((R(0, 0) * rectangle_2d[i][0]) + (R(0, 1) * rectangle_2d[i][1])) + centroid(0);
+                double y = ((R(1, 0) * rectangle_2d[i][0]) + (R(1, 1) * rectangle_2d[i][1])) + centroid(1);
+                double z = ((R(2, 0) * rectangle_2d[i][0]) + (R(2, 1) * rectangle_2d[i][1])) + centroid(2);
 
                 vertices[i][0] = x;
                 vertices[i][1] = y;
@@ -308,9 +308,9 @@ namespace layout_extractor {
                                                                                          std::vector<double>(3, 0));
             for (size_t i = 0; i < ellipse_2d.size(); ++i) {
 
-                double x = ((R(0, 0) * vertices[i][0]) + (R(0, 1) * vertices[i][1])) + centroid(0);
-                double y = ((R(1, 0) * vertices[i][0]) + (R(1, 1) * vertices[i][1])) + centroid(1);
-                double z = ((R(2, 0) * vertices[i][0]) + (R(2, 1) * vertices[i][1])) + centroid(2);
+                double x = ((R(0, 0) * ellipse_2d[i][0]) + (R(0, 1) * ellipse_2d[i][1])) + centroid(0);
+                double y = ((R(1, 0) * ellipse_2d[i][0]) + (R(1, 1) * ellipse_2d[i][1])) + centroid(1);
+                double z = ((R(2, 0) * ellipse_2d[i][0]) + (R(2, 1) * ellipse_2d[i][1])) + centroid(2);
 
                 vertices[i][0] = x;
                 vertices[i][1] = y;

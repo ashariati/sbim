@@ -122,6 +122,7 @@ public:
                         layout_segment.header.frame_id = plane_array.header.frame_id;
                         layout_segment.header.stamp = plane_array.header.stamp;
                         layout_segment.plane_id = p.id;
+                        layout_segment.label = p.label;
 
                         std::vector<std::vector<double>> segment_vertices = summarizer.ellipsoidSummary(s);
                         layout_segment.vertices = verticesToPointArray(segment_vertices);
@@ -136,6 +137,7 @@ public:
                         layout_segment.header.frame_id = plane_array.header.frame_id;
                         layout_segment.header.stamp = plane_array.header.stamp;
                         layout_segment.plane_id = p.id;
+                        layout_segment.label = p.label;
 
                         std::vector<std::vector<double>> segment_vertices = summarizer.rectangleSummary(s);
                         layout_segment.vertices = verticesToPointArray(segment_vertices);

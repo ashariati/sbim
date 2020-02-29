@@ -11,14 +11,16 @@
 
     <node pkg="sbim_visualizations" type="principal_planes_visualization" name="layout_planes_visualization">
         <param name="marker_ns" value="layout_planes" />
-        <param name="red" value="0.0" />
-        <param name="green" value="0.75" />
-        <param name="blue" value="1.0" />
         <remap from="/planes" to="/planar_slam_node/layout_planes"/>
     </node>
 
     <node pkg="sbim_visualizations" type="trajectory_visualization" name="trajectory_visualization">
         <remap from="/trajectory" to="/planar_slam_node/trajectory"/>
+    </node>
+
+    <node pkg="sbim_visualizations" type="layout_segment_visualization" name="layout_segment_visualization">
+        <param name="marker_ns" value="layout_segments" />
+        <remap from="/layout_segments" to="/layout_extractor_node/layout_segments"/>
     </node>
 
 </launch>
