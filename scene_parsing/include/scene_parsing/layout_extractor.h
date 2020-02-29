@@ -52,6 +52,10 @@ namespace layout_extractor {
             sac_model_plane.projectPoints(inliers, plane_coefficients, *projected_cloud);
             pcl::copyPointCloud(*projected_cloud, inliers, *layout_cloud);
 
+            if (inliers.empty()) {
+                return std::vector<pcl::PointCloud<PointT>>(0, pcl::PointCloud<PointT>());
+            }
+
             // cluster segments
             std::vector<pcl::PointIndices> cluster_indices;
             typename pcl::search::KdTree<PointT>::Ptr tree(new pcl::search::KdTree<PointT>);

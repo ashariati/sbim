@@ -99,8 +99,12 @@ public:
             sbim_msgs::PrincipalPlaneArray plane_array = message.second;
 
             // filter point cloud
-            PointCloud filtered_cloud = extractor.filterPointCloud(point_cloud, filter_leaf_size_);
-            // PointCloud filtered_cloud = point_cloud;
+            PointCloud filtered_cloud;
+            if (filter_leaf_size_ > 0) {
+                filtered_cloud = extractor.filterPointCloud(point_cloud, filter_leaf_size_);
+            } else {
+                filtered_cloud = point_cloud;
+            }
 
             // instantiate message
             sbim_msgs::LayoutSegmentArray layout_segment_array;
