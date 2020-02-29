@@ -68,7 +68,7 @@ namespace signal_1d {
         // ensures first of repeated value selected
         for (auto &di : df) {
             // make derivative values close to zero negative
-            di = (std::abs(di) < std::numeric_limits<T>::epsilon()) ? -std::numeric_limits<T>::epsilon() : di;
+            di = (std::fabs(di) < 1e-8) ? -1e-8 : di;
         }
 
         // find zero-crossing points of the derivative

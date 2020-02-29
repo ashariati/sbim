@@ -34,7 +34,8 @@ class LayoutExtractorNode {
     int frequency_;
     int queue_size_;
 
-    layout_extractor::Params params_;
+    layout_extractor::ExtractorParams extractor_params_;
+    layout_extractor::SummarizerParams summarizer_params_;
     double filter_leaf_size_;
 
 public:
@@ -51,12 +52,14 @@ public:
         nh_.param<int>("frequency", frequency_, 10);
         nh_.param<int>("queue_size", queue_size_, 1);
 
-        nh_.param<double>("distance_threshold", params_.distance_threshold, 0.03);
-        nh_.param<double>("cluster_tolerance", params_.cluster_tolerance, 0.05);
-        nh_.param<int>("min_cluster_size", params_.min_cluster_size, 1000);
-        nh_.param<int>("max_cluster_size", params_.max_cluster_size, -1);
+        nh_.param<double>("distance_threshold", extractor_params_.distance_threshold, 0.03);
+        nh_.param<double>("cluster_tolerance", extractor_params_.cluster_tolerance, 0.05);
+        nh_.param<int>("min_cluster_size", extractor_params_.min_cluster_size, 1000);
+        nh_.param<int>("max_cluster_size", extractor_params_.max_cluster_size, -1);
 
         nh_.param<double>("filter_leaf_size", filter_leaf_size_, 0.02);
+
+        nh_.param<double>("boundary_alpha", summarizer_params_.alpha, 0.1);
 
         object_pub_ = nh_.advertise<vision_msgs::Detection3DArray>("objects", 10);
         segment_pub_ = nh_.advertise<sbim_msgs::LayoutSegmentArray>("layout_segments", 10);
@@ -78,7 +81,8 @@ public:
 
     void loop() {
 
-        layout_extractor::LayoutExtractor extractor(params_);
+        layout_extractor::LayoutExtractor extractor(extractor_params_);
+        layout_extractor::LayoutSummarizer summarizer(summarizer_params_);
 
         ros::Rate rate(frequency_);
         while (ros::ok()) {
@@ -100,17 +104,51 @@ public:
             PointCloud filtered_cloud = extractor.filterPointCloud(point_cloud, filter_leaf_size_);
             // PointCloud filtered_cloud = point_cloud;
 
+            // instantiate message
+            sbim_msgs::LayoutSegmentArray layout_segment_array;
+
             // for each plane
-            for (auto p: plane_array.planes) {
+            for (auto &p: plane_array.planes) {
 
                 std::vector<double> plane_coeff = {p.plane.coef[0], p.plane.coef[1], p.plane.coef[2], p.plane.coef[3]};
 
                 // extract layout segments
-                std::vector<PointCloud> plane_segments;
-                plane_segments = extractor.extractSegmentsAtPlane(filtered_cloud, plane_coeff);
+                std::vector<PointCloud> cloud_segments;
+                cloud_segments = extractor.extractSegmentsAtPlane(filtered_cloud, plane_coeff);
 
-                // publish
-                for (auto segment : plane_segments) {
+                // convert to and save summarized layout segments
+                if (p.label.data == "0") {
+
+                    for (auto &s : cloud_segments) {
+                        sbim_msgs::LayoutSegment layout_segment;
+                        layout_segment.header.frame_id = plane_array.header.frame_id;
+                        layout_segment.header.stamp = plane_array.header.stamp;
+                        layout_segment.plane_id = p.id;
+
+                        std::vector<std::vector<double>> segment_vertices = summarizer.ellipsoidSummary(s);
+                        layout_segment.vertices = verticesToPointArray(segment_vertices);
+
+                        layout_segment_array.layout_segments.push_back(layout_segment);
+                    }
+
+                } else {
+
+                    for (auto &s : cloud_segments) {
+                        sbim_msgs::LayoutSegment layout_segment;
+                        layout_segment.header.frame_id = plane_array.header.frame_id;
+                        layout_segment.header.stamp = plane_array.header.stamp;
+                        layout_segment.plane_id = p.id;
+
+                        std::vector<std::vector<double>> segment_vertices = summarizer.rectangleSummary(s);
+                        layout_segment.vertices = verticesToPointArray(segment_vertices);
+
+                        layout_segment_array.layout_segments.push_back(layout_segment);
+                    }
+
+                }
+
+                // publish clouds
+                for (auto &segment : cloud_segments) {
                     segment.header.stamp = point_cloud.header.stamp;
                     segment.header.frame_id = point_cloud.header.frame_id;
                     cloud_pub_.publish(segment);
@@ -118,9 +156,25 @@ public:
 
             }
 
+            // publish
+            segment_pub_.publish(layout_segment_array);
 
         }
 
+    }
+
+    static std::vector<geometry_msgs::Point> verticesToPointArray(const std::vector<std::vector<double>> &vertices) {
+
+        std::vector<geometry_msgs::Point> points;
+        for (auto &v : vertices) {
+            geometry_msgs::Point point;
+            point.x = v[0];
+            point.y = v[1];
+            point.z = v[2];
+            points.push_back(point);
+        }
+
+        return points;
     }
 
 };

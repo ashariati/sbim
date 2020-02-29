@@ -227,3 +227,6 @@ target_link_libraries(layout_extractor_node
 
 add_executable(signal_1d-test test/test_signal_1d.cpp)
 target_link_libraries(signal_1d-test Catch2::Catch2)
+
+add_executable(layout_extractor-test test/test_layout_extractor.cpp)
+target_link_libraries(layout_extractor-test Catch2::Catch2)
