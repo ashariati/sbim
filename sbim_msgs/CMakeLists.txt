@@ -58,6 +58,9 @@ add_message_files(
         LayoutSegment.msg
         LayoutSegmentArray.msg
         Trajectory.msg
+        SceneNode.msg
+        SceneEdge.msg
+        Floorplan.msg
 )
 
 ## Generate services in the 'srv' folder
