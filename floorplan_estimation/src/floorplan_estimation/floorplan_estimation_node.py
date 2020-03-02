@@ -9,6 +9,10 @@ import message_filters
 
 import sbim_msgs.msg
 from sbim_msgs.msg import Trajectory, PrincipalPlaneArray, CorrespondenceMap, LayoutSegmentArray
+from sbim_msgs.msg import Floorplan, SceneNode, SceneEdge
+
+import geometry_msgs.msg
+from geometry_msgs.msg import Point
 
 import bimpy
 from bimpy import models, estimators
@@ -30,15 +34,19 @@ class FloorplanEstimationNode(object):
         layout_plane_sub = message_filters.Subscriber('/planar_slam_node/layout_planes', PrincipalPlaneArray)
         correspondence_sub = message_filters.Subscriber('/planar_slam_node/correspondence_map', CorrespondenceMap)
         slam_sync = message_filters.ApproximateTimeSynchronizer(
-            fs=[trajectory_sub, layout_plane_sub, correspondence_sub], queue_size=10, slop=0.05)
+            fs=[trajectory_sub, layout_plane_sub, correspondence_sub], queue_size=100, slop=0.05)
         slam_sync.registerCallback(self.slam_callback)
 
-        segment_sub = message_filters.Subscriber('/layout_extractor_node/layout_segments', LayoutSegmentArray)
-        segment_sub.registerCallback(self.scene_parsing_callback)
+        segment_sub = rospy.Subscriber('/layout_extractor_node/layout_segments', LayoutSegmentArray,
+                                       self.scene_parsing_callback, queue_size=100)
+        # segment_sub = message_filters.Subscriber('/layout_extractor_node/layout_segments', LayoutSegmentArray)
         # door_sub = message_filters.Subscriber('/door_detector_node/doors', LayoutSegmentArray)
         # parsing_sync = message_filters.ApproximateTimeSynchronizer(
-        #     fs=[segment_sub, door_sub], queue_size=10, slop=0.1)
+        #     fs=[segment_sub, door_sub], queue_size=10, slop=0.05)
         # parsing_sync.registerCallback(self.scene_parsing_callback)
+
+        # publishers
+        self._floorplan_pub = rospy.Publisher('/floorplan_estimation_node/floorplan', Floorplan, queue_size=10)
 
         self._lock = threading.Lock()
         self._pose_at_time = {}
@@ -142,7 +150,6 @@ class FloorplanEstimationNode(object):
                 evidence.extend(plane_evidence[plane_id])
 
             for z_id in upward_facing:
-                start_time = time.time()
 
                 # initialize cell complex at height
                 z_ref = -plane_model[z_id].coefficients[3]
@@ -162,10 +169,49 @@ class FloorplanEstimationNode(object):
                 floorplan_speculator = estimators.FloorPlanSpeculator(cell_complex, horizon=self.speculation_horizon)
                 floorplan = floorplan_speculator.floorplan()
 
-                print(floorplan.number_of_nodes())
-                print(time.time() - start_time)
+                floorplan_msg = self._to_msg(floorplan)
+                self._floorplan_pub.publish(floorplan_msg)
 
-            print('')
+    @staticmethod
+    def _to_msg(floorplan):
+
+        floorplan_msg = Floorplan()
+        floorplan_msg.header.frame_id = 'building'
+        floorplan_msg.header.stamp = rospy.Time.now()
+
+        node_id = {}
+        for i, u in enumerate(floorplan.nodes):
+            node_id[u] = i
+            scene_node_msg = SceneNode()
+            scene_node_msg.free_ratio.data = u.free_ratio
+            for vertex in u.vertices:
+                point_msg = Point()
+                point_msg.x = vertex[0]
+                point_msg.y = vertex[1]
+                point_msg.z = vertex[2]
+                scene_node_msg.vertices.append(point_msg)
+            floorplan_msg.nodes.append(scene_node_msg)
+
+        for u, v, data in floorplan.edges(data=True):
+            scene_edge_msg = SceneEdge()
+            scene_edge_msg.u.data = node_id[u]
+            scene_edge_msg.v.data = node_id[v]
+            if data['boundary_interval'] is not None:
+                interval = data['boundary_interval']
+                start_point = Point()
+                start_point.x = interval[0][0]
+                start_point.y = interval[0][1]
+                start_point.z = interval[0][2]
+                scene_edge_msg.boundary.append(start_point)
+                stop_point = Point()
+                stop_point.x = interval[1][0]
+                stop_point.y = interval[1][1]
+                stop_point.z = interval[1][2]
+                scene_edge_msg.boundary.append(stop_point)
+            floorplan_msg.edges.append(scene_edge_msg)
+
+        return floorplan_msg
+
 
 
 if __name__ == '__main__':
