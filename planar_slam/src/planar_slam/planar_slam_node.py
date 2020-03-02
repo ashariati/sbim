@@ -64,7 +64,7 @@ class PlanarSlamNode(object):
         # compass_sub = message_filters.Subscriber('/point_cloud_compass_node/compass_transform', TransformStamped)
         # plane_sub = message_filters.Subscriber('/plane_detector_node/planes', PrincipalPlaneArray)
         sync = message_filters.ApproximateTimeSynchronizer(
-                fs=[pose_sub, compass_sub, plane_sub], queue_size=10, slop=0.1)
+            fs=[pose_sub, compass_sub, plane_sub], queue_size=10, slop=0.05)
         sync.registerCallback(self.callback)
 
         # publishers
@@ -128,6 +128,7 @@ class PlanarSlamNode(object):
             plane_var = variable.LandmarkVariable(1, plane.label.data, plane.intensity.data)
             v_c = np.array([[plane.plane.coef[0], plane.plane.coef[1], plane.plane.coef[2]]])
             d_c = -plane.plane.coef[3]
+            plane_var.facing = -1 if d_c > 0 else 1
             plane_factor = factor.ObservationFactor(point_var, plane_var, v_c, d_c, np.array([self.sigma_d]))
             obsv_factors.append(plane_factor)
 
@@ -206,6 +207,7 @@ class PlanarSlamNode(object):
                 plane = PrincipalPlane()
                 plane.plane.coef[:3] = self._label_orientation_map[lp.class_label][0]
                 plane.plane.coef[3] = -lp.position
+                plane.facing.data = lp.facing
                 plane.intensity.data = np.sum([k.mass for k in plane_group_map[lp]])
                 plane.label.data = lp.class_label
                 plane.id.data = self._var_id_map[plane_parent_map[lp]]
