@@ -23,4 +23,9 @@
         <remap from="/layout_segments" to="/layout_extractor_node/layout_segments"/>
     </node>
 
+    <node pkg="sbim_visualizations" type="floorplan_visualization" name="floorplan_visualization">
+        <param name="marker_ns" value="floorplan" />
+        <remap from="/floorplan" to="/floorplan_estimation_node/floorplan"/>
+    </node>
+
 </launch>

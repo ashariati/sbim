@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import numpy as np
 import threading
 import copy
@@ -23,7 +25,7 @@ class FloorplanEstimationNode(object):
     def __init__(self):
 
         # parameters
-        self.freq = rospy.get_param('frequency', 2)
+        self.freq = rospy.get_param('frequency', 1)
         self.speculation_horizon = rospy.get_param('speculation_horizon', 0)
         self.width_max = rospy.get_param('width_max', 300)
         self.length_max = rospy.get_param('length_max', 300)

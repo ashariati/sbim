@@ -4,6 +4,7 @@
     <include file="$(find structural_compass)/launch/point_cloud_compass.launch" />
     <include file="$(find scene_parsing)/launch/scene_parsing.launch" />
     <include file="$(find planar_slam)/launch/planar_slam.launch" />
+    <include file="$(find floorplan_estimation)/launch/floorplan_estimation.launch" />
 
     <include file="$(find sbim_launch)/launch/visualization.launch"/>
 
