@@ -1,6 +1,7 @@
 <launch>
 
     <node pkg="floorplan_estimation" name="floorplan_estimation_node" type="floorplan_estimation_node.py" output="screen">
+        <param name="boundary_coverage_threshold" value="0.4" />
     </node>
 
 </launch>

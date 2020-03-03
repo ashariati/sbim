@@ -133,7 +133,7 @@ public:
             boundary_marker.scale.y = 1.0;
             boundary_marker.scale.z = 1.0;
 
-            boundary_marker.color.a = 0.6;
+            boundary_marker.color.a = 0.8;
             boundary_marker.color.r = 1.0;
             boundary_marker.color.g = 0.0;
             boundary_marker.color.b = 0.0;
