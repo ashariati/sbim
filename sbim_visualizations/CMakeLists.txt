@@ -234,3 +234,8 @@ target_link_libraries(floorplan_visualization
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+add_executable(test-convex test/test_convex.cpp)
+target_link_libraries(test-convex
+        ${catkin_LIBRARIES}
+        )

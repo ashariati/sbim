@@ -11,7 +11,7 @@ import message_filters
 
 import sbim_msgs.msg
 from sbim_msgs.msg import Trajectory, PrincipalPlaneArray, CorrespondenceMap, LayoutSegmentArray
-from sbim_msgs.msg import Floorplan, SceneNode, SceneEdge
+from sbim_msgs.msg import FloorplanArray, Floorplan, SceneNode, SceneEdge
 
 import geometry_msgs.msg
 from geometry_msgs.msg import Point
@@ -48,7 +48,7 @@ class FloorplanEstimationNode(object):
         # parsing_sync.registerCallback(self.scene_parsing_callback)
 
         # publishers
-        self._floorplan_pub = rospy.Publisher('/floorplan_estimation_node/floorplan', Floorplan, queue_size=10)
+        self._floorplan_pub = rospy.Publisher('/floorplan_estimation_node/floorplan', FloorplanArray, queue_size=10)
 
         self._lock = threading.Lock()
         self._pose_at_time = {}
@@ -151,6 +151,9 @@ class FloorplanEstimationNode(object):
             for plane_id in plane_evidence:
                 evidence.extend(plane_evidence[plane_id])
 
+            floorplan_array_msg = FloorplanArray()
+            floorplan_array_msg.header.frame_id = 'building'
+            floorplan_array_msg.header.stamp = rospy.Time.now()
             for z_id in upward_facing:
 
                 # initialize cell complex at height
@@ -171,15 +174,16 @@ class FloorplanEstimationNode(object):
                 floorplan_speculator = estimators.FloorPlanSpeculator(cell_complex, horizon=self.speculation_horizon)
                 floorplan = floorplan_speculator.floorplan()
 
-                floorplan_msg = self._to_msg(floorplan)
-                self._floorplan_pub.publish(floorplan_msg)
+                # convert to message and save to array
+                floorplan_msg = self._floorplan_to_msg(floorplan)
+                floorplan_array_msg.floorplans.append(floorplan_msg)
+
+            self._floorplan_pub.publish(floorplan_array_msg)
 
     @staticmethod
-    def _to_msg(floorplan):
+    def _floorplan_to_msg(floorplan):
 
         floorplan_msg = Floorplan()
-        floorplan_msg.header.frame_id = 'building'
-        floorplan_msg.header.stamp = rospy.Time.now()
 
         node_id = {}
         for i, u in enumerate(floorplan.nodes):

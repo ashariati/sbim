@@ -61,6 +61,7 @@ add_message_files(
         SceneNode.msg
         SceneEdge.msg
         Floorplan.msg
+        FloorplanArray.msg
 )
 
 ## Generate services in the 'srv' folder

@@ -4,7 +4,7 @@
 
 #include <ros/ros.h>
 
-#include <sbim_msgs/Floorplan.h>
+#include <sbim_msgs/FloorplanArray.h>
 #include <visualization_msgs/MarkerArray.h>
 
 #include <sbim_visualizations/convex.h>
@@ -27,41 +27,45 @@ public:
 
         nh_.param<std::string>("marker_ns", marker_ns_, "floorplan");
 
-        sub_ = nh_.subscribe<sbim_msgs::Floorplan>("/floorplan", 1,
-                                                   boost::bind(&FloorplanVisualization::callback,
+        sub_ = nh_.subscribe<sbim_msgs::FloorplanArray>("/floorplan", 1,
+                                                        boost::bind(&FloorplanVisualization::callback,
                                                                this, _1));
         pub_ = nh_.advertise<visualization_msgs::MarkerArray>("floorplan_viz", 0);
     }
 
-    void callback(const sbim_msgs::Floorplan::ConstPtr &floorplan) {
+    void callback(const sbim_msgs::FloorplanArray::ConstPtr &floorplan_array) {
 
         visualization_msgs::MarkerArray marker_array;
+
         size_t id = 0;
-        for (auto &node : floorplan->nodes) {
+        for (auto &floorplan : floorplan_array->floorplans) {
 
             visualization_msgs::Marker marker;
-            marker.header.frame_id = floorplan->header.frame_id;
+            marker.header.frame_id = floorplan_array->header.frame_id;
             marker.header.stamp = ros::Time();
             marker.ns = marker_ns_;
             marker.id = id;
             marker.type = visualization_msgs::Marker::TRIANGLE_LIST;
             marker.action = visualization_msgs::Marker::ADD;
 
-            std::vector<std::vector<double>> vertices;
-            for (auto &vertex : node.vertices) {
-                std::vector<double> v = {vertex.x, vertex.y, vertex.z};
-                vertices.push_back(v);
-            }
+            for (auto &node : floorplan.nodes) {
 
-            sbim_visualizations::sortVerticesCCW(vertices);
+                std::vector<std::vector<double>> vertices;
+                for (auto &vertex : node.vertices) {
+                    std::vector<double> v = {vertex.x, vertex.y, vertex.z};
+                    vertices.push_back(v);
+                }
 
-            std::vector<std::vector<double>> triangles = sbim_visualizations::convexToTriangles(vertices);
-            for (auto &t : triangles) {
-                geometry_msgs::Point pt;
-                pt.x = t[0];
-                pt.y = t[1];
-                pt.z = t[2];
-                marker.points.push_back(pt);
+                sbim_visualizations::sortVerticesCCW(vertices);
+
+                std::vector<std::vector<double>> triangles = sbim_visualizations::convexToTriangles(vertices);
+                for (auto &t : triangles) {
+                    geometry_msgs::Point pt;
+                    pt.x = t[0];
+                    pt.y = t[1];
+                    pt.z = t[2];
+                    marker.points.push_back(pt);
+                }
             }
 
             marker.pose.orientation.x = 0.0;
@@ -81,11 +85,13 @@ public:
             marker_array.markers.push_back(marker);
 
             id += 1;
+
+            pub_.publish(marker_array);
+
         }
 
-        pub_.publish(marker_array);
-
     }
+
 
 };
 
