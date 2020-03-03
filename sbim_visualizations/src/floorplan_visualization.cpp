@@ -79,7 +79,7 @@ public:
             floorplan_marker.scale.y = 1.0;
             floorplan_marker.scale.z = 1.0;
 
-            floorplan_marker.color.a = 1.0;
+            floorplan_marker.color.a = 0.6;
             floorplan_marker.color.r = 0.0;
             floorplan_marker.color.g = 1.0;
             floorplan_marker.color.b = 0.0;

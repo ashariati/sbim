@@ -27,9 +27,11 @@ class FloorplanEstimationNode(object):
         # parameters
         self.freq = rospy.get_param('frequency', 1)
         self.speculation_horizon = rospy.get_param('speculation_horizon', 0)
+        self.min_free_ratio = rospy.get_param('min_free_ratio', 0.02)
+        self.boundary_coverage_threshold = rospy.get_param('boundary_coverage_threshold', 0.5)
+        self.boundary_height_threshold = rospy.get_param('boundary_height_threshold', 2.5)
         self.width_max = rospy.get_param('width_max', 300)
         self.length_max = rospy.get_param('length_max', 300)
-        self.boundary_height_threshold = rospy.get_param('boundary_height_threshold', 2.5)
 
         # subscribers
         trajectory_sub = message_filters.Subscriber('/planar_slam_node/trajectory', Trajectory)
@@ -171,7 +173,10 @@ class FloorplanEstimationNode(object):
                     cell_complex.insert_boundary(boundary, height_threshold=(z_ref + self.boundary_height_threshold))
 
                 # infer floorplan
-                floorplan_speculator = estimators.FloorPlanSpeculator(cell_complex, horizon=self.speculation_horizon)
+                floorplan_speculator = estimators.FloorPlanSpeculator(cell_complex,
+                                                                      horizon=self.speculation_horizon,
+                                                                      min_ratio=self.min_free_ratio,
+                                                                      coverage_threshold=self.boundary_height_threshold)
                 floorplan = floorplan_speculator.floorplan()
 
                 # convert to message and save to array
