@@ -3,17 +3,11 @@
     <node pkg="scene_parsing" type="plane_detector_node" name="plane_detector_node">
         <remap from="/scan" to="/point_cloud_compass_node/transformed_scan" />
         <remap from="/principal_directions" to="/point_cloud_compass_node/principal_directions" />
-        <param name="scan_range" value="5.0"/>
-        <param name="min_intensity" value="5000.0"/>
     </node>
 
     <node pkg="scene_parsing" type="layout_extractor_node" name="layout_extractor_node" output="screen">
         <remap from="/transformed_scan" to="/point_cloud_compass_node/transformed_scan" />
         <remap from="/layout_planes" to="/plane_detector_node/planes" />
-        <param name="min_cluster_size" value="1000"/>
-        <param name="distance_threshold" value="0.08"/>
-        <param name="cluster_tolerance" value="0.10"/>
-        <param name="filter_leaf_size" value="0.02"/>
     </node>
 
 </launch>

@@ -50,19 +50,16 @@ class PlanarSlamNode(object):
     def __init__(self):
 
         # parameters
-        self.freq = rospy.get_param('frequency', 5)
-        self.pose_window = rospy.get_param('pose_window', 10)
-        self.sigma_t = rospy.get_param('odometry_noise', 0.01)
-        self.sigma_d = rospy.get_param('observation_noise', 0.03)
-        assoc_range = rospy.get_param('association_range', 0.5)
+        self.freq = rospy.get_param('/planar_slam_node/frequency', 5)
+        self.pose_window = rospy.get_param('/planar_slam_node/pose_window', 10)
+        self.sigma_t = rospy.get_param('/planar_slam_node/odometry_noise', 0.01)
+        self.sigma_d = rospy.get_param('/planar_slam_node/observation_noise', 0.03)
+        assoc_range = rospy.get_param('/planar_slam_node/association_range', 0.5)
 
         # subscribers
         pose_sub = message_filters.Subscriber('/keyframe', PoseStamped)
         compass_sub = message_filters.Subscriber('/compass_transform', TransformStamped)
         plane_sub = message_filters.Subscriber('/planes', PrincipalPlaneArray)
-        # pose_sub = message_filters.Subscriber('/scan_aggregator/keyframe', PoseStamped)
-        # compass_sub = message_filters.Subscriber('/point_cloud_compass_node/compass_transform', TransformStamped)
-        # plane_sub = message_filters.Subscriber('/plane_detector_node/planes', PrincipalPlaneArray)
         sync = message_filters.ApproximateTimeSynchronizer(
             fs=[pose_sub, compass_sub, plane_sub], queue_size=10, slop=0.05)
         sync.registerCallback(self.callback)
@@ -79,7 +76,7 @@ class PlanarSlamNode(object):
         self._G_ws = np.eye(4)
         self._G_cs = np.eye(4)
         self._point_var = variable.PointVariable(3)
-        self._fg = factorgraph.GaussianFactorGraph(free_point_window=self.pose_window * self.freq)
+        self._fg = factorgraph.GaussianFactorGraph(free_point_window=self.pose_window)
         self._optimizer = optim.Occam(self._fg, assoc_range=assoc_range)
         self._is_init = False
 

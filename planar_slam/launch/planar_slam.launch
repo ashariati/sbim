@@ -4,7 +4,6 @@
         <remap from="/keyframe" to="/scan_aggregator/keyframe" />
         <remap from="/compass_transform" to="/point_cloud_compass_node/compass_transform" />
         <remap from="/planes" to="/plane_detector_node/planes" />
-        <param name="association_range" value="0.3" />
     </node>
 
 </launch>

@@ -25,13 +25,14 @@ class FloorplanEstimationNode(object):
     def __init__(self):
 
         # parameters
-        self.freq = rospy.get_param('frequency', 1)
-        self.speculation_horizon = rospy.get_param('speculation_horizon', 0)
-        self.min_free_ratio = rospy.get_param('min_free_ratio', 0.02)
-        self.boundary_coverage_threshold = rospy.get_param('boundary_coverage_threshold', 0.5)
-        self.boundary_height_threshold = rospy.get_param('boundary_height_threshold', 2.5)
-        self.width_max = rospy.get_param('width_max', 300)
-        self.length_max = rospy.get_param('length_max', 300)
+        self.freq = rospy.get_param('/floorplan_estimation_node/frequency', 1)
+        self.speculation_horizon = rospy.get_param('/floorplan_estimation_node/speculation_horizon', 0)
+        self.min_free_ratio = rospy.get_param('/floorplan_estimation_node/min_free_ratio', 0.02)
+        self.boundary_coverage_threshold = rospy.get_param('/floorplan_estimation_node/boundary_coverage_threshold',
+                                                           0.5)
+        self.boundary_height_threshold = rospy.get_param('/floorplan_estimation_node/boundary_height_threshold', 2.5)
+        self.width_max = rospy.get_param('/floorplan_estimation_node/width_max', 300)
+        self.length_max = rospy.get_param('/floorplan_estimation_node/length_max', 300)
 
         # subscribers
         trajectory_sub = message_filters.Subscriber('/planar_slam_node/trajectory', Trajectory)
@@ -148,6 +149,12 @@ class FloorplanEstimationNode(object):
             boundary_list = copy.copy(self._boundary_list)
             plane_evidence = copy.copy(self._plane_evidence)
             self._lock.release()
+
+            ## for visualization only
+            # upward_facing.sort(key=lambda i: -plane_model[i].coefficients[3])
+            # if len(upward_facing) < 2:
+            #     continue
+            # upward_facing = [upward_facing[1]]
 
             evidence = []
             for plane_id in plane_evidence:
