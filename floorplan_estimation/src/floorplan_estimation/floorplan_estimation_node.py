@@ -198,7 +198,7 @@ class FloorplanEstimationNode(object):
                 scene_node_msg.vertices.append(point_msg)
             floorplan_msg.nodes.append(scene_node_msg)
 
-        for u, v, data in floorplan.edges(data=True):
+        for u, v, data in floorplan.edges(data=True, keys=False):
             scene_edge_msg = SceneEdge()
             scene_edge_msg.u.data = node_id[u]
             scene_edge_msg.v.data = node_id[v]

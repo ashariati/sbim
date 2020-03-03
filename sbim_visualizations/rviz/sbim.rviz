@@ -187,7 +187,7 @@ Visualization Manager:
       Marker Topic: /floorplan_visualization/floorplan_viz
       Name: MarkerArray
       Namespaces:
-        {}
+        floorplan: true
       Queue Size: 100
       Value: true
   Enabled: true
@@ -226,14 +226,14 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.32849493622779846
+      Pitch: 0.38349461555480957
       Position:
-        X: -9.999216079711914
-        Y: 20.134153366088867
-        Z: 12.975262641906738
+        X: -6.555359840393066
+        Y: 13.881712913513184
+        Z: 7.777989387512207
       Target Frame: building
       Value: FPS (rviz)
-      Yaw: 5.075632095336914
+      Yaw: 4.955652713775635
     Saved: ~
 Window Geometry:
   Displays:
