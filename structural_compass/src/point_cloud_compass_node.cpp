@@ -22,15 +22,33 @@ typedef message_filters::sync_policies::ApproximateTime<PointCloud, geometry_msg
 
 class PointCloudCompassNode {
 
+    ros::NodeHandle nh_;
+    message_filters::Subscriber<PointCloud> pc_sub_;
+    message_filters::Subscriber<geometry_msgs::PoseStamped> pose_sub_;
+    message_filters::Synchronizer<Policy> pc_sync_;
+    ros::Publisher pd_pub_;
+    ros::Publisher rot_pub_;
+    ros::Publisher pc_pub_;
+
+    bool manhattan_world_;
+
+    float frequency_;
+    int queue_size_;
+    std::deque<std::tuple<PointCloud, geometry_msgs::PoseStamped>> message_queue_;
+
+    std::unique_ptr<structural_compass::EntropyCompass> compass_;
+
 public:
 
     PointCloudCompassNode() : nh_("~"),
                               pc_sub_(nh_, "/scan", 1),
                               pose_sub_(nh_, "/pose", 1),
-                              pc_sync_(Policy(10), pc_sub_, pose_sub_) {
+                              pc_sync_(Policy(10), pc_sub_, pose_sub_),
+                              manhattan_world_(false) {
 
         nh_.param<float>("frequency", frequency_, 10.0);
         nh_.param<int>("queue_size", queue_size_, 1);
+        nh_.param<bool>("manhattan_world", manhattan_world_, false);
 
         compass_ = std::make_unique<structural_compass::EntropyCompass>();
         pc_sync_.registerCallback(boost::bind(&PointCloudCompassNode::callback, this, _1, _2));
@@ -68,6 +86,10 @@ public:
             Eigen::Matrix3f R_cs;
             std::vector<Eigen::Vector3f> directions;
             R_cs = compass_->principalDirections(P_s, R_ws, gravity, directions);
+
+            if (manhattan_world_) {
+                directions.resize(3);
+            }
 
             Eigen::Isometry3f G_cs = Eigen::Isometry3f::Identity();
             G_cs.rotate(R_cs);
@@ -121,23 +143,6 @@ public:
 
 
     }
-
-private:
-
-    ros::NodeHandle nh_;
-    message_filters::Subscriber<PointCloud> pc_sub_;
-    message_filters::Subscriber<geometry_msgs::PoseStamped> pose_sub_;
-    message_filters::Synchronizer<Policy> pc_sync_;
-    ros::Publisher pd_pub_;
-    ros::Publisher rot_pub_;
-    ros::Publisher pc_pub_;
-
-    float frequency_;
-    int queue_size_;
-    std::deque<std::tuple<PointCloud, geometry_msgs::PoseStamped>> message_queue_;
-
-    std::unique_ptr<structural_compass::EntropyCompass> compass_;
-
 
 };
 
