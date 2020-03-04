@@ -21,18 +21,48 @@ typedef message_filters::sync_policies::ApproximateTime<PointCloud, nav_msgs::Od
 
 class ScanAggregator {
 
+    ros::NodeHandle nh_;
+    float frequency_;
+    std::string cloud_frame_id_;
+    std::string pose_frame_id_;
+    Eigen::Isometry3f G_vs_;
+
+    message_filters::Subscriber<PointCloud> pc_sub_;
+    message_filters::Subscriber<nav_msgs::Odometry> odom_sub_;
+    message_filters::Synchronizer<Policy> sync_;
+    ros::Publisher cloud_pub_;
+    ros::Publisher keyframe_pub_;
+
+    std::deque<std::tuple<PointCloud::Ptr, Eigen::Isometry3d>> cloud_buffer_;
+
+
 public:
 
     ScanAggregator() : nh_("~"), pc_sub_(nh_, "/scan", 20),
                        odom_sub_(nh_, "/odometry", 100),
-                       sync_(Policy(20), ScanAggregator::pc_sub_, ScanAggregator::odom_sub_) {
-        float duration;
+                       sync_(Policy(20), ScanAggregator::pc_sub_, ScanAggregator::odom_sub_),
+                       G_vs_(Eigen::Isometry3f::Identity()) {
 
-        nh_.param<float>("duration", duration, 0.2);
         nh_.param<std::string>("cloud_frame_id", cloud_frame_id_, "vehicle");
         nh_.param<std::string>("pose_frame_id", pose_frame_id_, "local");
 
+        float duration;
+        nh_.param<float>("duration", duration, 0.2);
         frequency_ = 1.0 / duration;
+
+        std::vector<double> calibration_parameters;
+        nh_.param<std::vector<double>>("sensor_calibration", calibration_parameters,
+                                       {1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0,
+                                        1.0});
+
+        Eigen::Matrix3f R_vs;
+        R_vs << calibration_parameters[0], calibration_parameters[1], calibration_parameters[2],
+                calibration_parameters[4], calibration_parameters[5], calibration_parameters[6],
+                calibration_parameters[8], calibration_parameters[9], calibration_parameters[10];
+        Eigen::Vector3f t_vs;
+        t_vs << calibration_parameters[3], calibration_parameters[7], calibration_parameters[11];
+        G_vs_.translate(t_vs);
+        G_vs_.rotate(R_vs);
 
         sync_.registerCallback(boost::bind(&ScanAggregator::callback, this, _1, _2));
         cloud_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("aggregate_scan", 10);
@@ -47,7 +77,7 @@ public:
             rate.sleep();
             ros::spinOnce();
 
-            if (cloud_buffer_.size() < 1) {
+            if (cloud_buffer_.empty()) {
                 continue;
             }
 
@@ -90,25 +120,10 @@ public:
         tf::poseMsgToEigen(odom_msg->pose.pose, G);
 
         PointCloud::Ptr vehicle_cloud(new PointCloud());
-        *vehicle_cloud = *cloud_msg;
+        pcl::transformPointCloud(*cloud_msg, *vehicle_cloud, G_vs_);
         cloud_buffer_.emplace_back(vehicle_cloud, G);
 
     }
-
-private:
-
-    ros::NodeHandle nh_;
-    float frequency_;
-    std::string cloud_frame_id_;
-    std::string pose_frame_id_;
-
-    message_filters::Subscriber<PointCloud> pc_sub_;
-    message_filters::Subscriber<nav_msgs::Odometry> odom_sub_;
-    message_filters::Synchronizer<Policy> sync_;
-    ros::Publisher cloud_pub_;
-    ros::Publisher keyframe_pub_;
-
-    std::deque<std::tuple<PointCloud::Ptr, Eigen::Isometry3d>> cloud_buffer_;
 
 };
 

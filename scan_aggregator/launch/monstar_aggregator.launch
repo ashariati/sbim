@@ -3,7 +3,6 @@
     <node pkg="scan_aggregator" type="scan_aggregator" name="scan_aggregator" output="screen">
         <remap from="/scan" to="/rig/monstar/points" />
         <remap from="/odometry" to="/rig/vio/odom" />
-        <param name="duration" value="0.2" />
     </node>
 
 </launch>
