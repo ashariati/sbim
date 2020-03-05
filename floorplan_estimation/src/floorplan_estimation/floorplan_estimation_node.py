@@ -15,6 +15,7 @@ from std_msgs.msg import UInt32
 import sbim_msgs.msg
 from sbim_msgs.msg import Trajectory, PrincipalPlaneArray, CorrespondenceMap, LayoutSegmentArray
 from sbim_msgs.msg import FloorplanArray, Floorplan, SceneNode, SceneEdge
+from sbim_msgs.msg import UInt32Pair
 
 import geometry_msgs.msg
 from geometry_msgs.msg import Point
@@ -221,6 +222,12 @@ class FloorplanEstimationNode(object):
                 point_msg.y = vertex[1]
                 point_msg.z = vertex[2]
                 scene_node_msg.vertices.append(point_msg)
+            for edge in u.edges:
+                pair_msg = UInt32Pair()
+                pair_msg.u.data = edge[0]
+                pair_msg.v.data = edge[1]
+                scene_node_msg.edges.append(pair_msg)
+
             floorplan_msg.nodes.append(scene_node_msg)
 
         for u, v, data in floorplan.edges(data=True, keys=False):

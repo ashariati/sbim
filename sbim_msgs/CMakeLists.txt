@@ -62,6 +62,7 @@ add_message_files(
         SceneEdge.msg
         Floorplan.msg
         FloorplanArray.msg
+        UInt32Pair.msg
 )
 
 ## Generate services in the 'srv' folder
