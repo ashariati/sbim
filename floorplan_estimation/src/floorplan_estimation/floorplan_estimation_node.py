@@ -71,6 +71,7 @@ class FloorplanEstimationNode(object):
         segment_list = copy.copy(self._segment_list)
         plane_model = copy.copy(self._plane_model)
         plane_label = copy.copy(self._plane_label)
+        pose_at_time = copy.copy(self._pose_at_time)
         self._lock.release()
 
         upward_facing = []
@@ -83,7 +84,7 @@ class FloorplanEstimationNode(object):
 
         for pose in trajectory.poses:
             time = (pose.header.stamp.secs, pose.header.stamp.nsecs)
-            self._pose_at_time[time] = np.array([pose.pose.position.x, pose.pose.position.y, pose.pose.position.z])
+            pose_at_time[time] = np.array([pose.pose.position.x, pose.pose.position.y, pose.pose.position.z])
 
         # process segments
         boundary_list = []
@@ -95,7 +96,7 @@ class FloorplanEstimationNode(object):
             plane = plane_model[parent_plane[segment.plane_id.data]]
 
             time = (segment.header.stamp.secs, segment.header.stamp.nsecs)
-            pose = self._pose_at_time[time]
+            pose = pose_at_time[time]
 
             # register to position in world
             vertices = []
@@ -124,6 +125,7 @@ class FloorplanEstimationNode(object):
         self._upward_facing = upward_facing
         self._boundary_list = boundary_list
         self._plane_evidence = plane_evidence
+        self._pose_at_time = pose_at_time
         self._lock.release()
 
     def scene_parsing_callback(self, layout_segments):
@@ -148,17 +150,23 @@ class FloorplanEstimationNode(object):
             upward_facing = copy.copy(self._upward_facing)
             boundary_list = copy.copy(self._boundary_list)
             plane_evidence = copy.copy(self._plane_evidence)
+            pose_at_time = copy.copy(self._pose_at_time)
             self._lock.release()
 
             ## for visualization only
             # upward_facing.sort(key=lambda i: -plane_model[i].coefficients[3])
-            # if len(upward_facing) < 2:
+            # # if len(upward_facing) < 2:
+            # #     continue
+            # # upward_facing = [upward_facing[1]]
+            # if len(upward_facing) < 1:
             #     continue
-            # upward_facing = [upward_facing[1]]
+            # upward_facing = [upward_facing[0]]
 
             evidence = []
             for plane_id in plane_evidence:
                 evidence.extend(plane_evidence[plane_id])
+            for position in pose_at_time.values():
+                evidence.append(models.Point(position))
 
             floorplan_array_msg = FloorplanArray()
             floorplan_array_msg.header.frame_id = 'building'
