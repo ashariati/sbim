@@ -23,6 +23,9 @@ private:
     float boundary_height_;
     float graph_height_;
 
+    bool draw_graph_;
+    bool draw_boundary_;
+
 public:
 
     ~FloorplanVisualization() = default;
@@ -32,6 +35,8 @@ public:
         nh_.param<std::string>("marker_ns", marker_ns_, "floorplan");
         nh_.param<float>("boundary_height", boundary_height_, 2.5);
         nh_.param<float>("graph_height", graph_height_, 1.25);
+        nh_.param<bool>("draw_graph", draw_graph_, true);
+        nh_.param<bool>("draw_boundary", draw_boundary_, true);
 
         sub_ = nh_.subscribe<sbim_msgs::FloorplanArray>("/floorplan", 1,
                                                         boost::bind(&FloorplanVisualization::callback,
@@ -46,33 +51,40 @@ public:
         size_t id = 0;
         for (auto &floorplan : floorplan_array->floorplans) {
 
-            visualization_msgs::Marker boundary_marker = boundaryMarker(floorplan);
-            boundary_marker.header.frame_id = floorplan_array->header.frame_id;
-            boundary_marker.id = id;
-            id += 1;
-
             visualization_msgs::Marker floorplan_marker = floorplanMarker(floorplan);
             floorplan_marker.header.frame_id = floorplan_array->header.frame_id;
             floorplan_marker.id = id;
             id += 1;
 
-            visualization_msgs::Marker nodes_marker;
-            nodes_marker.header.frame_id = floorplan_array->header.frame_id;
-            nodes_marker.id = id;
-            id += 1;
-
-            visualization_msgs::Marker edges_marker;
-            edges_marker.header.frame_id = floorplan_array->header.frame_id;
-            edges_marker.id = id;
-            id += 1;
-
-            graphMarker(floorplan, nodes_marker, edges_marker);
-
-            marker_array.markers.push_back(boundary_marker);
             marker_array.markers.push_back(floorplan_marker);
 
-            marker_array.markers.push_back(nodes_marker);
-            marker_array.markers.push_back(edges_marker);
+            if (draw_boundary_) {
+
+                visualization_msgs::Marker boundary_marker = boundaryMarker(floorplan);
+                boundary_marker.header.frame_id = floorplan_array->header.frame_id;
+                boundary_marker.id = id;
+                id += 1;
+
+                marker_array.markers.push_back(boundary_marker);
+            }
+
+            if (draw_graph_) {
+                visualization_msgs::Marker nodes_marker;
+                nodes_marker.header.frame_id = floorplan_array->header.frame_id;
+                nodes_marker.id = id;
+                id += 1;
+
+                visualization_msgs::Marker edges_marker;
+                edges_marker.header.frame_id = floorplan_array->header.frame_id;
+                edges_marker.id = id;
+                id += 1;
+
+                graphMarker(floorplan, nodes_marker, edges_marker);
+
+                marker_array.markers.push_back(nodes_marker);
+                marker_array.markers.push_back(edges_marker);
+
+            }
 
         }
 
