@@ -25,5 +25,5 @@
 # floorplan estimation
 /floorplan_estimation_node/speculation_horizon: 0
 /floorplan_estimation_node/min_free_ratio: 0.0
-/floorplan_estimation_node/boundary_coverage_threshold: 1.0
-/floorplan_estimation_node/boundary_height_threshold: 3.0
+/floorplan_estimation_node/boundary_coverage_threshold: 1.5
+/floorplan_estimation_node/boundary_height_threshold: 2.5

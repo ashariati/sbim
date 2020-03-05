@@ -195,7 +195,7 @@ class FloorplanEstimationNode(object):
                 floorplan_speculator = estimators.FloorPlanSpeculator(cell_complex,
                                                                       horizon=self.speculation_horizon,
                                                                       min_ratio=self.min_free_ratio,
-                                                                      coverage_threshold=self.boundary_height_threshold)
+                                                                      coverage_threshold=self.boundary_coverage_threshold)
                 floorplan = floorplan_speculator.floorplan()
 
                 # convert to message and save to array

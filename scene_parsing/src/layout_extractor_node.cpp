@@ -106,6 +106,10 @@ public:
                 filtered_cloud = point_cloud;
             }
 
+            PointCloud all_cloud_segments;
+            all_cloud_segments.header.stamp = point_cloud.header.stamp;
+            all_cloud_segments.header.frame_id = point_cloud.header.frame_id;
+
             // instantiate message
             sbim_msgs::LayoutSegmentArray layout_segment_array;
 
@@ -151,17 +155,16 @@ public:
 
                 }
 
-                // publish clouds
+                // cloud segments
                 for (auto &segment : cloud_segments) {
-                    segment.header.stamp = point_cloud.header.stamp;
-                    segment.header.frame_id = point_cloud.header.frame_id;
-                    cloud_pub_.publish(segment);
+                    all_cloud_segments += segment;
                 }
 
             }
 
             // publish
             segment_pub_.publish(layout_segment_array);
+            cloud_pub_.publish(all_cloud_segments);
 
         }
 

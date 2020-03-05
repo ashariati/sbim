@@ -10,7 +10,7 @@ Panels:
         - /TF1/Tree1
         - /PointCloud21
       Splitter Ratio: 0.5794117450714111
-    Tree Height: 537
+    Tree Height: 363
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -29,7 +29,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: Image
+    SyncSource: ""
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -174,7 +174,7 @@ Visualization Manager:
       Marker Topic: /floorplan_visualization/floorplan_viz
       Name: MarkerArray
       Namespaces:
-        floorplan: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Image
