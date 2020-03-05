@@ -21,6 +21,7 @@ private:
 
     std::string marker_ns_;
     float boundary_height_;
+    float graph_height_;
 
 public:
 
@@ -30,6 +31,7 @@ public:
 
         nh_.param<std::string>("marker_ns", marker_ns_, "floorplan");
         nh_.param<float>("boundary_height", boundary_height_, 2.5);
+        nh_.param<float>("graph_height", graph_height_, 1.25);
 
         sub_ = nh_.subscribe<sbim_msgs::FloorplanArray>("/floorplan", 1,
                                                         boost::bind(&FloorplanVisualization::callback,
@@ -54,12 +56,103 @@ public:
             floorplan_marker.id = id;
             id += 1;
 
+            visualization_msgs::Marker nodes_marker;
+            nodes_marker.header.frame_id = floorplan_array->header.frame_id;
+            nodes_marker.id = id;
+            id += 1;
+
+            visualization_msgs::Marker edges_marker;
+            edges_marker.header.frame_id = floorplan_array->header.frame_id;
+            edges_marker.id = id;
+            id += 1;
+
+            graphMarker(floorplan, nodes_marker, edges_marker);
+
             marker_array.markers.push_back(boundary_marker);
             marker_array.markers.push_back(floorplan_marker);
+
+            marker_array.markers.push_back(nodes_marker);
+            marker_array.markers.push_back(edges_marker);
 
         }
 
         pub_.publish(marker_array);
+
+    }
+
+    void graphMarker(const sbim_msgs::Floorplan &floorplan, visualization_msgs::Marker &nodes_marker,
+                     visualization_msgs::Marker &edges_marker) {
+
+        nodes_marker.header.stamp = ros::Time();
+        nodes_marker.ns = marker_ns_;
+        nodes_marker.type = visualization_msgs::Marker::SPHERE_LIST;
+        nodes_marker.action = visualization_msgs::Marker::ADD;
+
+        edges_marker.header.stamp = ros::Time();
+        edges_marker.ns = marker_ns_;
+        edges_marker.type = visualization_msgs::Marker::LINE_LIST;
+        edges_marker.action = visualization_msgs::Marker::ADD;
+
+        for (auto &node : floorplan.nodes) {
+
+            auto n = static_cast<double>(node.vertices.size());
+
+            std::vector<double> mean = {0.0, 0.0, 0.0};
+            for (auto &vertex : node.vertices) {
+                mean[0] += vertex.x;
+                mean[1] += vertex.y;
+                mean[2] += vertex.z;
+            }
+            mean[0] = mean[0] / n;
+            mean[1] = mean[1] / n;
+            mean[2] = mean[2] / n;
+
+            geometry_msgs::Point mu;
+            mu.x = mean[0];
+            mu.y = mean[1];
+            mu.z = mean[2] + graph_height_;
+
+            nodes_marker.points.push_back(mu);
+
+        }
+
+        for (auto &edges : floorplan.edges) {
+
+            size_t u = edges.u.data;
+            size_t v = edges.v.data;
+
+            edges_marker.points.push_back(nodes_marker.points[u]);
+            edges_marker.points.push_back(nodes_marker.points[v]);
+
+        }
+
+        nodes_marker.pose.position.x = 0.0;
+        nodes_marker.pose.position.y = 0.0;
+        nodes_marker.pose.position.z = 0.0;
+        nodes_marker.pose.orientation.x = 0.0;
+        nodes_marker.pose.orientation.y = 0.0;
+        nodes_marker.pose.orientation.z = 0.0;
+        nodes_marker.pose.orientation.w = 1.0;
+        nodes_marker.scale.x = 0.5;
+        nodes_marker.scale.y = 0.5;
+        nodes_marker.scale.z = 0.5;
+        nodes_marker.color.a = 0.9;
+        nodes_marker.color.r = 0.0;
+        nodes_marker.color.g = 0.0;
+        nodes_marker.color.b = 0.0;
+
+        edges_marker.pose.position.x = 0.0;
+        edges_marker.pose.position.y = 0.0;
+        edges_marker.pose.position.z = 0.0;
+        edges_marker.pose.orientation.x = 0.0;
+        edges_marker.pose.orientation.y = 0.0;
+        edges_marker.pose.orientation.z = 0.0;
+        edges_marker.pose.orientation.w = 1.0;
+        edges_marker.scale.x = 0.2;
+        edges_marker.color.a = 0.9;
+        edges_marker.color.r = 0.0;
+        edges_marker.color.g = 0.0;
+        edges_marker.color.b = 0.0;
 
     }
 
