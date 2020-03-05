@@ -114,6 +114,13 @@ public:
 
             nodes_marker.points.push_back(mu);
 
+            std_msgs::ColorRGBA color;
+            color.a = 1.0;
+            color.r = 0.0;
+            color.g = 0.0;
+            color.b = 0.0;
+            nodes_marker.colors.push_back(color);
+
         }
 
         for (auto &edges : floorplan.edges) {
@@ -124,6 +131,13 @@ public:
             edges_marker.points.push_back(nodes_marker.points[u]);
             edges_marker.points.push_back(nodes_marker.points[v]);
 
+            std_msgs::ColorRGBA color;
+            color.a = 1.0;
+            color.r = 0.0;
+            color.g = 0.0;
+            color.b = 0.0;
+            edges_marker.colors.push_back(color);
+            edges_marker.colors.push_back(color);
         }
 
         nodes_marker.pose.position.x = 0.0;
@@ -136,10 +150,6 @@ public:
         nodes_marker.scale.x = 0.5;
         nodes_marker.scale.y = 0.5;
         nodes_marker.scale.z = 0.5;
-        nodes_marker.color.a = 0.9;
-        nodes_marker.color.r = 0.0;
-        nodes_marker.color.g = 0.0;
-        nodes_marker.color.b = 0.0;
 
         edges_marker.pose.position.x = 0.0;
         edges_marker.pose.position.y = 0.0;
@@ -149,10 +159,6 @@ public:
         edges_marker.pose.orientation.z = 0.0;
         edges_marker.pose.orientation.w = 1.0;
         edges_marker.scale.x = 0.2;
-        edges_marker.color.a = 0.9;
-        edges_marker.color.r = 0.0;
-        edges_marker.color.g = 0.0;
-        edges_marker.color.b = 0.0;
 
     }
 
@@ -181,6 +187,13 @@ public:
                 pt.y = t[1];
                 pt.z = t[2];
                 floorplan_marker.points.push_back(pt);
+
+                std_msgs::ColorRGBA color;
+                color.a = 1.0;
+                color.r = 0.0;
+                color.g = 1.0;
+                color.b = 0.0;
+                floorplan_marker.colors.push_back(color);
             }
 
         }
@@ -193,11 +206,6 @@ public:
         floorplan_marker.scale.x = 1.0;
         floorplan_marker.scale.y = 1.0;
         floorplan_marker.scale.z = 1.0;
-
-        floorplan_marker.color.a = 0.9;
-        floorplan_marker.color.r = 0.0;
-        floorplan_marker.color.g = 1.0;
-        floorplan_marker.color.b = 0.0;
 
         return floorplan_marker;
     }
@@ -260,6 +268,13 @@ public:
                     pt.y = t[1];
                     pt.z = t[2];
                     boundary_marker.points.push_back(pt);
+
+                    std_msgs::ColorRGBA color;
+                    color.a = 1.0;
+                    color.r = 1.0;
+                    color.g = 0.0;
+                    color.b = 0.0;
+                    boundary_marker.colors.push_back(color);
                 }
 
             }
@@ -274,11 +289,6 @@ public:
         boundary_marker.scale.x = 1.0;
         boundary_marker.scale.y = 1.0;
         boundary_marker.scale.z = 1.0;
-
-        boundary_marker.color.a = 0.6;
-        boundary_marker.color.r = 1.0;
-        boundary_marker.color.g = 0.0;
-        boundary_marker.color.b = 0.0;
 
         return boundary_marker;
     }
