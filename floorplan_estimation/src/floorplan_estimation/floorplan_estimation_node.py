@@ -9,6 +9,9 @@ import time
 import rospy
 import message_filters
 
+import std_msgs.msg
+from std_msgs.msg import UInt32
+
 import sbim_msgs.msg
 from sbim_msgs.msg import Trajectory, PrincipalPlaneArray, CorrespondenceMap, LayoutSegmentArray
 from sbim_msgs.msg import FloorplanArray, Floorplan, SceneNode, SceneEdge
@@ -154,13 +157,13 @@ class FloorplanEstimationNode(object):
             self._lock.release()
 
             ## for visualization only
-            # upward_facing.sort(key=lambda i: -plane_model[i].coefficients[3])
-            # # if len(upward_facing) < 2:
-            # #     continue
-            # # upward_facing = [upward_facing[1]]
-            # if len(upward_facing) < 1:
+            upward_facing.sort(key=lambda i: -plane_model[i].coefficients[3])
+            # if len(upward_facing) < 2:
             #     continue
-            # upward_facing = [upward_facing[0]]
+            # upward_facing = [upward_facing[1]]
+            if len(upward_facing) < 1:
+                continue
+            upward_facing = [upward_facing[0]]
 
             evidence = []
             for plane_id in plane_evidence:
@@ -210,6 +213,8 @@ class FloorplanEstimationNode(object):
             node_id[u] = i
             scene_node_msg = SceneNode()
             scene_node_msg.free_ratio.data = u.free_ratio
+            scene_node_msg.index_map_keys = [UInt32(data=k) for k in u.vertex_index_map.keys()]
+            scene_node_msg.index_map_values = [UInt32(data=v) for v in u.vertex_index_map.values()]
             for vertex in u.vertices:
                 point_msg = Point()
                 point_msg.x = vertex[0]
@@ -222,6 +227,11 @@ class FloorplanEstimationNode(object):
             scene_edge_msg = SceneEdge()
             scene_edge_msg.u.data = node_id[u]
             scene_edge_msg.v.data = node_id[v]
+
+            shared_edge = data['shared_edge']
+            if shared_edge is not None:
+                scene_edge_msg.shared_edge = [UInt32(data=shared_edge[0]), UInt32(data=shared_edge[1])]
+
             if data['boundary_interval'] is not None:
                 interval = data['boundary_interval']
                 start_point = Point()
