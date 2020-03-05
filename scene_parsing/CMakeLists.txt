@@ -145,6 +145,7 @@ include_directories(
 
 add_executable(plane_detector_node src/plane_detector_node.cpp)
 add_executable(layout_extractor_node src/layout_extractor_node.cpp)
+add_executable(cloud_transformer_node src/cloud_transformer_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -157,6 +158,7 @@ add_executable(layout_extractor_node src/layout_extractor_node.cpp)
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(plane_detector_node ${catkin_EXPORTED_TARGETS})
 add_dependencies(layout_extractor_node ${catkin_EXPORTED_TARGETS})
+add_dependencies(cloud_transformer_node ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node
@@ -167,6 +169,9 @@ target_link_libraries(plane_detector_node
         ${catkin_LIBRARIES}
         )
 target_link_libraries(layout_extractor_node
+        ${catkin_LIBRARIES}
+        )
+target_link_libraries(cloud_transformer_node
         ${catkin_LIBRARIES}
         )
 

@@ -23,8 +23,9 @@ class LayoutExtractorNode {
 
     ros::NodeHandle nh_;
     ros::Publisher object_pub_;
+    ros::Publisher object_cloud_pub_;
     ros::Publisher segment_pub_;
-    ros::Publisher cloud_pub_;
+    ros::Publisher segment_cloud_pub_;
     message_filters::Subscriber<PointCloud> pc_sub_;
     message_filters::Subscriber<sbim_msgs::PrincipalPlaneArray> plane_sub_;
     message_filters::Synchronizer<Policy> sync_;
@@ -60,8 +61,9 @@ public:
         nh_.param<double>("filter_leaf_size", filter_leaf_size_, 0.02);
 
         object_pub_ = nh_.advertise<vision_msgs::Detection3DArray>("objects", 10);
+        object_cloud_pub_ = nh_.advertise<PointCloud>("object_cloud", 10);
         segment_pub_ = nh_.advertise<sbim_msgs::LayoutSegmentArray>("layout_segments", 10);
-        cloud_pub_ = nh_.advertise<PointCloud>("cloud_segments", 10);
+        segment_cloud_pub_ = nh_.advertise<PointCloud>("cloud_segments", 10);
 
         sync_.registerCallback(boost::bind(&LayoutExtractorNode::callback, this, _1, _2));
 
@@ -164,7 +166,7 @@ public:
 
             // publish
             segment_pub_.publish(layout_segment_array);
-            cloud_pub_.publish(all_cloud_segments);
+            segment_cloud_pub_.publish(all_cloud_segments);
 
         }
 
