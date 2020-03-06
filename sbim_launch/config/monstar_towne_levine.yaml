@@ -11,10 +11,10 @@
 # scene parsing
 /plane_detector_node/scan_range: 10.0
 /plane_detector_node/min_intensity: 10000.0
-/layout_extractor_node/min_cluster_size: 800
+/layout_extractor_node/min_cluster_size: 700
 /layout_extractor_node/distance_threshold: 0.15
 /layout_extractor_node/cluster_tolerance: 0.4
-/layout_extractor_node/filter_leaf_size: 0.01
+/layout_extractor_node/filter_leaf_size: 0.03
 
 # SLAM
 /planar_slam_node/pose_window: 50
