@@ -8,6 +8,7 @@
 #include <message_filters/sync_policies/approximate_time.h>
 #include <pcl_ros/point_cloud.h>
 #include <pcl_conversions/pcl_conversions.h>
+#include <pcl/filters/extract_indices.h>
 
 #include <sbim_msgs/PrincipalPlaneArray.h>
 
@@ -16,8 +17,8 @@
 
 #include <scene_parsing/layout_extractor.h>
 
-typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
-typedef message_filters::sync_policies::ApproximateTime<PointCloud, sbim_msgs::PrincipalPlaneArray> Policy;
+typedef pcl::PointXYZ PointT;
+typedef message_filters::sync_policies::ApproximateTime<pcl::PointCloud<PointT>, sbim_msgs::PrincipalPlaneArray> Policy;
 
 class LayoutExtractorNode {
 
@@ -26,11 +27,11 @@ class LayoutExtractorNode {
     ros::Publisher object_cloud_pub_;
     ros::Publisher segment_pub_;
     ros::Publisher segment_cloud_pub_;
-    message_filters::Subscriber<PointCloud> pc_sub_;
+    message_filters::Subscriber<pcl::PointCloud<PointT>> pc_sub_;
     message_filters::Subscriber<sbim_msgs::PrincipalPlaneArray> plane_sub_;
     message_filters::Synchronizer<Policy> sync_;
 
-    std::deque<std::pair<PointCloud, sbim_msgs::PrincipalPlaneArray>> message_queue_;
+    std::deque<std::pair<pcl::PointCloud<PointT>, sbim_msgs::PrincipalPlaneArray>> message_queue_;
 
     int frequency_;
     int queue_size_;
@@ -61,15 +62,16 @@ public:
         nh_.param<double>("filter_leaf_size", filter_leaf_size_, 0.02);
 
         object_pub_ = nh_.advertise<vision_msgs::Detection3DArray>("objects", 10);
-        object_cloud_pub_ = nh_.advertise<PointCloud>("object_cloud", 10);
+        object_cloud_pub_ = nh_.advertise<pcl::PointCloud<PointT>>("object_cloud", 10);
         segment_pub_ = nh_.advertise<sbim_msgs::LayoutSegmentArray>("layout_segments", 10);
-        segment_cloud_pub_ = nh_.advertise<PointCloud>("cloud_segments", 10);
+        segment_cloud_pub_ = nh_.advertise<pcl::PointCloud<PointT>>("cloud_segments", 10);
 
         sync_.registerCallback(boost::bind(&LayoutExtractorNode::callback, this, _1, _2));
 
     }
 
-    void callback(const PointCloud::ConstPtr &cloud, const sbim_msgs::PrincipalPlaneArray::ConstPtr &layout_planes) {
+    void callback(const pcl::PointCloud<PointT>::ConstPtr &cloud,
+                  const sbim_msgs::PrincipalPlaneArray::ConstPtr &layout_planes) {
 
         message_queue_.emplace_back(*cloud, *layout_planes);
 
@@ -97,20 +99,21 @@ public:
             // next message
             auto message = message_queue_.front();
             message_queue_.pop_front();
-            PointCloud point_cloud = message.first;
+            pcl::PointCloud<PointT> point_cloud = message.first;
             sbim_msgs::PrincipalPlaneArray plane_array = message.second;
 
             // filter point cloud
-            PointCloud filtered_cloud;
+            pcl::PointCloud<PointT>::Ptr filtered_cloud(new pcl::PointCloud<PointT>);
             if (filter_leaf_size_ > 0) {
-                filtered_cloud = extractor.filterPointCloud(point_cloud, filter_leaf_size_);
+                *filtered_cloud = extractor.filterPointCloud(point_cloud, filter_leaf_size_);
             } else {
-                filtered_cloud = point_cloud;
+                *filtered_cloud = point_cloud;
             }
 
-            PointCloud all_cloud_segments;
-            all_cloud_segments.header.stamp = point_cloud.header.stamp;
-            all_cloud_segments.header.frame_id = point_cloud.header.frame_id;
+            pcl::PointCloud<PointT> all_cloud_segments;
+            all_cloud_segments.header = point_cloud.header;
+
+            std::vector<int> all_inliers;
 
             // instantiate message
             sbim_msgs::LayoutSegmentArray layout_segment_array;
@@ -121,8 +124,13 @@ public:
                 std::vector<double> plane_coeff = {p.plane.coef[0], p.plane.coef[1], p.plane.coef[2], p.plane.coef[3]};
 
                 // extract layout segments
-                std::vector<PointCloud> cloud_segments;
-                cloud_segments = extractor.extractSegmentsAtPlane(filtered_cloud, plane_coeff);
+                std::vector<pcl::PointCloud<PointT>> cloud_segments;
+                std::vector<int> inliers = extractor.extractSegmentsAtPlane(*filtered_cloud, plane_coeff,
+                                                                            cloud_segments);
+
+                // save inliers
+                all_inliers.reserve(all_inliers.size() + inliers.size());
+                all_inliers.insert(all_inliers.end(), inliers.begin(), inliers.end());
 
                 // convert to and save summarized layout segments
                 if (p.label.data == "0") {
@@ -164,7 +172,25 @@ public:
 
             }
 
+            // remove repeated inliers
+            std::sort(all_inliers.begin(), all_inliers.end());
+            auto ip = std::unique(all_inliers.begin(), all_inliers.end());
+            all_inliers.resize(std::distance(all_inliers.begin(), ip));
+
+            // filter for objects
+            pcl::PointCloud<PointT> object_cloud;
+            pcl::PointIndices::Ptr inliers_ptr(new pcl::PointIndices);
+            inliers_ptr->indices = all_inliers;
+            pcl::ExtractIndices<PointT> extract;
+            extract.setInputCloud(filtered_cloud);
+            extract.setNegative(true);
+            extract.setIndices(inliers_ptr);
+            extract.filter(object_cloud);
+            object_cloud.header = point_cloud.header;
+
+
             // publish
+            object_cloud_pub_.publish(object_cloud);
             segment_pub_.publish(layout_segment_array);
             segment_cloud_pub_.publish(all_cloud_segments);
 

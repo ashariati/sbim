@@ -34,8 +34,9 @@ namespace layout_extractor {
         LayoutExtractor(layout_extractor::ExtractorParams &params) : params_(params) {}
 
         template<typename PointT>
-        std::vector<pcl::PointCloud<PointT>>
-        extractSegmentsAtPlane(const pcl::PointCloud<PointT> &point_cloud, const std::vector<double> &plane) const {
+        std::vector<int>
+        extractSegmentsAtPlane(const pcl::PointCloud<PointT> &point_cloud, const std::vector<double> &plane,
+                               std::vector<pcl::PointCloud<PointT>> &layout_clusters) const {
 
             typename pcl::PointCloud<PointT>::Ptr cloud_ptr(new pcl::PointCloud<PointT>);
             *cloud_ptr = point_cloud;
@@ -53,7 +54,7 @@ namespace layout_extractor {
             pcl::copyPointCloud(*projected_cloud, inliers, *layout_cloud);
 
             if (inliers.empty()) {
-                return std::vector<pcl::PointCloud<PointT>>(0, pcl::PointCloud<PointT>());
+                return inliers;
             }
 
             // cluster segments
@@ -69,7 +70,6 @@ namespace layout_extractor {
             extraction.extract(cluster_indices);
 
             // save
-            std::vector<pcl::PointCloud<PointT>> layout_clusters;
             for (const auto &index_set : cluster_indices) {
 
                 pcl::PointCloud<PointT> cluster;
@@ -80,7 +80,7 @@ namespace layout_extractor {
 
             }
 
-            return layout_clusters;
+            return inliers;
         }
 
         template<typename PointT>
