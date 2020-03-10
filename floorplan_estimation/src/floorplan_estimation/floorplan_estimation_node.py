@@ -158,13 +158,13 @@ class FloorplanEstimationNode(object):
             self._lock.release()
 
             ## for visualization only
-            upward_facing.sort(key=lambda i: -plane_model[i].coefficients[3])
+            # upward_facing.sort(key=lambda i: -plane_model[i].coefficients[3])
             # if len(upward_facing) < 2:
             #     continue
             # upward_facing = [upward_facing[1]]
-            if len(upward_facing) < 1:
-                continue
-            upward_facing = [upward_facing[0]]
+            # if len(upward_facing) < 1:
+            #     continue
+            # upward_facing = [upward_facing[0]]
 
             evidence = []
             for plane_id in plane_evidence:
