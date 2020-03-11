@@ -1,0 +1,1 @@
+sbim_msgs/Door[] doors

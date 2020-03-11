@@ -55,6 +55,8 @@ add_message_files(
         PrincipalPlaneArray.msg
         PrincipalPlane.msg
         CorrespondenceMap.msg
+        Door.msg
+        DoorArray.msg
         LayoutSegment.msg
         LayoutSegmentArray.msg
         Trajectory.msg
