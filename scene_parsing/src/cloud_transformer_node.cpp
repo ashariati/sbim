@@ -28,7 +28,6 @@ class CloudTransformerNode {
     std::deque<pcl::PointCloud<PointT>> cloud_queue_;
 
     std::mutex traj_mutex_;
-    uint64_t last_traj_;
     std::unordered_map<uint64_t, Eigen::Isometry3f> pose_at_time_;
 
     int frequency_;
@@ -70,7 +69,6 @@ public:
     void traj_callback(const sbim_msgs::Trajectory::ConstPtr &trajectory) {
 
         traj_mutex_.lock();
-        last_traj_ = pcl_conversions::toPCL(trajectory->header.stamp);
         for (auto &pose_stamped : trajectory->poses) {
             Eigen::Isometry3d G;
             tf::poseMsgToEigen(pose_stamped.pose, G);
@@ -109,7 +107,6 @@ public:
                 out_cloud += transformed_cloud;
             }
 
-            out_cloud.header.stamp = last_traj_;
             out_cloud.header.frame_id = frame_id_;
 
             cloud_mutex_.unlock();

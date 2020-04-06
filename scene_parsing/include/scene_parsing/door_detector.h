@@ -34,16 +34,16 @@ namespace scene_parsing {
                                                   -0.2909, -0.3218, -0.3829, -0.4636, -0.5405, -0.5834, -0.5688,
                                                   -0.4812,
                                                   -0.3232, -0.1140, 0.1140, 0.3232, 0.4812, 0.5688, 0.5834, 0.5385,
-                                                  0.4553, 0.3577, 0.2632, 0.1800, 0.1109, 0.0586, 0.0252, 0.0083,
-                                                  0.0019};
+                                                  0.4553,
+                                                  0.3577, 0.2632, 0.1800, 0.1109, 0.0586, 0.0252, 0.0083, 0.0019};
 
     public:
 
         explicit DoorDetector(scene_parsing::DetectorParams &params) : params_(params) {}
 
         template<typename PointT>
-        std::vector<std::vector<Eigen::Vector3f>>
-        detectDoorsFromCloud(const pcl::PointCloud<PointT> &point_cloud, const std::vector<double> &plane) const {
+        size_t detectDoorsFromCloud(const pcl::PointCloud<PointT> &point_cloud, const std::vector<double> &plane,
+                                    std::vector<std::vector<Eigen::Vector3f>> &doors) const {
 
             typename pcl::PointCloud<PointT>::Ptr cloud_ptr(new pcl::PointCloud<PointT>);
             *cloud_ptr = point_cloud;
@@ -61,16 +61,17 @@ namespace scene_parsing {
             pcl::copyPointCloud(*projected_cloud, inliers, *layout_cloud);
 
             if (inliers.empty()) {
-                return std::vector<std::vector<Eigen::Vector3f>>();
+                return 0;
             }
 
             // remove outliers
             typename pcl::PointCloud<PointT>::Ptr filtered_cloud(new pcl::PointCloud<PointT>);
-            pcl::StatisticalOutlierRemoval<PointT> outlier_removal;
-            outlier_removal.setInputCloud(projected_cloud);
-            outlier_removal.setMeanK(50);
-            outlier_removal.setStddevMulThresh(1.0);
-            outlier_removal.filter(*filtered_cloud);
+            // pcl::StatisticalOutlierRemoval<PointT> outlier_removal;
+            // outlier_removal.setInputCloud(projected_cloud);
+            // outlier_removal.setMeanK(3);
+            // outlier_removal.setStddevMulThresh(1.0);
+            // outlier_removal.filter(*filtered_cloud);
+            filtered_cloud = projected_cloud;
 
             // get height
             PointT min_p, max_p;
@@ -110,7 +111,11 @@ namespace scene_parsing {
             double min_d = *std::min_element(distances.begin(), distances.end());
             double max_d = *std::max_element(distances.begin(), distances.end());
             std::vector<int> histogram = signal_1d::histogram_counts(distances, min_d, max_d, 0.05);
-            std::vector<double> dhistogram(histogram.begin(), histogram.end());
+            double max_count = *std::max_element(histogram.begin(), histogram.end());
+            std::vector<double> dhistogram = std::vector<double>(histogram.size(), 0);
+            for (size_t i = 0; i < histogram.size(); ++i) {
+                dhistogram[i] = static_cast<double>(histogram[i]) / max_count;
+            }
             std::vector<double> door_signal = signal_1d::filter(dhistogram, door_filter_);
             std::vector<double> peak_intensity;
             std::vector<float> peak_location;
@@ -124,7 +129,6 @@ namespace scene_parsing {
             // transform to interval
             Eigen::Vector3f p_1;
             p_1 << p_0[0], p_0[1], z_ref + params_.standard_door_height;
-            std::vector<std::vector<Eigen::Vector3f>> doors;
             for (auto c : door_centers) {
                 std::vector<Eigen::Vector3f> door_extent = {(c + params_.standard_door_width / 2) * n_hat + p_1,
                                                             (c - params_.standard_door_width / 2) * n_hat + p_1,
@@ -133,21 +137,58 @@ namespace scene_parsing {
                 doors.push_back(door_extent);
             }
 
-            // std::cout << doors.size() << std::endl;
-            // for (auto &d : doors) {
-            //     for (auto &e : d) {
-            //         std::cout << e.transpose() << std::endl;
-            //     }
-            //     std::cout << std::endl;
-            // }
-
-            return doors;
+            return door_centers.size();
 
         }
 
-        std::vector<std::vector<Eigen::Vector3f>>
-        detectDoorsFromCrossing(const std::vector<std::vector<double>> &trajectory,
-                                const std::vector<double> &plane) const {
+        size_t
+        detectDoorsFromCrossing(const std::vector<std::vector<double>> &trajectory, const std::vector<double> &plane,
+                                std::vector<std::vector<Eigen::Vector3f>> &doors) const {
+
+            bool sign = std::signbit(trajectory[0][0] * plane[0] +
+                                     trajectory[0][1] * plane[1] +
+                                     trajectory[0][2] * plane[2] +
+                                     plane[3]);
+
+            for (auto &point : trajectory) {
+
+                double p_dist = point[0] * plane[0] + point[1] * plane[1] + point[2] * plane[2] + plane[3];
+                bool p_sign = std::signbit(p_dist);
+
+                if (p_sign != sign) {
+
+                    double z_ref = point[2] - params_.standard_door_height / 2;
+
+                    // construct line
+                    Eigen::Vector3f line;
+                    line << plane[0], plane[1], (plane[2] * z_ref + plane[3]);
+                    line = line / std::sqrt(plane[0] * plane[0] + plane[1] * plane[1]);
+
+                    // re-parameterize line
+                    double mag = -line[2];
+                    Eigen::Vector3f p_0;
+                    Eigen::Vector3f n_hat;
+                    p_0 << mag * line[0], mag * line[1], z_ref;
+                    n_hat << -line[1], line[0], 0;
+
+                    Eigen::Vector3f p_1;
+                    p_1 << p_0[0], p_0[1], z_ref + params_.standard_door_height;
+
+                    double c = n_hat[0] * (point[0] - p_0[0]) +
+                               n_hat[1] * (point[1] - p_0[1]) +
+                               n_hat[2] * (point[2] - p_0[2]);
+
+                    std::vector<Eigen::Vector3f> door_extent = {(c + params_.standard_door_width / 2) * n_hat + p_1,
+                                                                (c - params_.standard_door_width / 2) * n_hat + p_1,
+                                                                (c - params_.standard_door_width / 2) * n_hat + p_0,
+                                                                (c + params_.standard_door_width / 2) * n_hat + p_0};
+
+                    doors.push_back(door_extent);
+
+                }
+            }
+
+            return 1;
 
         }
 
