@@ -66,8 +66,6 @@ public:
 
     void pc_callback(const pcl::PointCloud<PointT>::ConstPtr &cloud) {
 
-        std::cout << "pc here" << std::endl;
-
         pc_message_queue_.push_back(*cloud);
 
         if (pc_message_queue_.size() > queue_size_) {
@@ -78,8 +76,6 @@ public:
 
     void slam_callback(const sbim_msgs::Trajectory::ConstPtr &trajectory,
                        const sbim_msgs::PrincipalPlaneArray::ConstPtr &layout_planes) {
-
-        std::cout << "slam here" << std::endl;
 
         slam_message_queue_.emplace_back(*trajectory, *layout_planes);
 

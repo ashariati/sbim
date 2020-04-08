@@ -26,16 +26,21 @@ namespace scene_parsing {
 
         DetectorParams params_;
 
-        const std::vector<double> door_filter_ = {0.0019, 0.0083, 0.0252, 0.0586, 0.1109, 0.1800, 0.2632, 0.3577,
-                                                  0.4553,
-                                                  0.5385, 0.5834, 0.5688, 0.4812, 0.3232, 0.1140, -0.1140, -0.3232,
-                                                  -0.4812, -0.5688, -0.5834, -0.5405, -0.4636, -0.3829, -0.3218,
-                                                  -0.2909,
-                                                  -0.2909, -0.3218, -0.3829, -0.4636, -0.5405, -0.5834, -0.5688,
-                                                  -0.4812,
-                                                  -0.3232, -0.1140, 0.1140, 0.3232, 0.4812, 0.5688, 0.5834, 0.5385,
-                                                  0.4553,
-                                                  0.3577, 0.2632, 0.1800, 0.1109, 0.0586, 0.0252, 0.0083, 0.0019};
+        // const std::vector<double> door_filter_ = {0.0019, 0.0083, 0.0252, 0.0586, 0.1109, 0.1800, 0.2632, 0.3577,
+        //                                           0.4553, 0.5385, 0.5834, 0.5688, 0.4812, 0.3232, 0.1140, -0.1140,
+        //                                           -0.3232, -0.4812, -0.5688, -0.5834, -0.5405, -0.4636, -0.3829,
+        //                                           -0.3218, -0.2909, -0.2909, -0.3218, -0.3829, -0.4636, -0.5405,
+        //                                           -0.5834, -0.5688, -0.4812, -0.3232, -0.1140, 0.1140, 0.3232, 0.4812,
+        //                                           0.5688, 0.5834, 0.5385, 0.4553, 0.3577, 0.2632, 0.1800, 0.1109,
+        //                                           0.0586, 0.0252, 0.0083, 0.0019};
+
+        const std::vector<double> door_filter_ = {0.0019, 0.0102, 0.0354, 0.0940, 0.2049, 0.3849, 0.6481, 1.0058,
+                                                  1.4612, 1.9997, 2.5831, 3.1518, 3.6331, 3.9563, 4.0703, 3.9563,
+                                                  3.6331, 3.1518, 2.5831, 1.9997, 1.4631, 1.0161, 0.6835, 0.4789,
+                                                  0.4098, 0.4789, 0.6835, 1.0161, 1.4631, 1.9997, 2.5831, 3.1518,
+                                                  3.6331, 3.9563, 4.0703, 3.9563, 3.6331, 3.1518, 2.5831, 1.9997,
+                                                  1.4612, 1.0058, 0.6481, 0.3849, 0.2049, 0.0940, 0.0354, 0.0102,
+                                                  0.0019};
 
     public:
 
@@ -89,7 +94,7 @@ namespace scene_parsing {
             // construct line
             Eigen::Vector3f line;
             line << plane[0], plane[1], (plane[2] * z_ref + plane[3]);
-            line = line / std::sqrt(plane[0] * plane[0] + plane[1] * plane[1]);
+            line = line / std::sqrt((plane[0] * plane[0]) + (plane[1] * plane[1]));
 
             // re-parameterize line
             double mag = -line[2];
@@ -104,27 +109,45 @@ namespace scene_parsing {
                 if (!pcl::isFinite(p)) {
                     continue;
                 }
-                distances.push_back(n_hat[0] * (p.x - p_0[0]) + n_hat[1] * (p.y - p_0[1]));
+                distances.push_back((n_hat[0] * (p.x - p_0[0])) + (n_hat[1] * (p.y - p_0[1])));
             }
 
-            // find door peak locations
+            // histogram of point density
             double min_d = *std::min_element(distances.begin(), distances.end());
             double max_d = *std::max_element(distances.begin(), distances.end());
             std::vector<int> histogram = signal_1d::histogram_counts(distances, min_d, max_d, 0.05);
-            double max_count = *std::max_element(histogram.begin(), histogram.end());
+
+            // normalize signal
+            int max_count = *std::max_element(histogram.begin(), histogram.end());
+            if (!max_count) {
+                return 0;
+            }
             std::vector<double> dhistogram = std::vector<double>(histogram.size(), 0);
             for (size_t i = 0; i < histogram.size(); ++i) {
                 dhistogram[i] = static_cast<double>(histogram[i]) / max_count;
             }
-            std::vector<double> door_signal = signal_1d::filter(dhistogram, door_filter_);
+
+            std::cout << plane[0] << " " << plane[1] << " " << plane[2] << " " << plane[3] << std::endl;
+            std::cout << line.transpose() << std::endl;
+            // signal_1d::print_vector(dhistogram);
+
+            // apply door filter
+            std::vector<double> door_signal = signal_1d::conv(dhistogram, door_filter_);
+
+            // signal_1d::print_vector(door_signal);
+
+            // find peaks
             std::vector<double> peak_intensity;
             std::vector<float> peak_location;
             signal_1d::find_peaks(door_signal, params_.min_peak_intensity, params_.min_peak_prominence,
                                   peak_intensity, peak_location);
             std::vector<double> door_centers;
             for (auto f : peak_location) {
+                // auto shift_f = f -
                 door_centers.push_back(((0.05 * f) + 0.025) + min_d);
             }
+
+            signal_1d::print_vector(peak_intensity);
 
             // transform to interval
             Eigen::Vector3f p_1;

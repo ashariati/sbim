@@ -10,11 +10,6 @@
         <remap from="/layout_planes" to="/plane_detector_node/planes" />
     </node>
 
-    <node pkg="scene_parsing" type="door_detector_node" name="door_detector_node" output="screen">
-    </node>
-    <!--
-    -->
-
     <node pkg="scene_parsing" type="cloud_transformer_node" name="compass_cloud_transformer">
         <remap from="/trajectory" to="/planar_slam_node/trajectory" />
         <remap from="/transformed_scan" to="/point_cloud_compass_node/transformed_scan" />

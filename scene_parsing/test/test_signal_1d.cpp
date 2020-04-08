@@ -59,7 +59,11 @@ TEST_CASE("Filter easy", "[Filter]") {
 
     std::vector<int> f{1, 2, 3, 4, 5, 6, 7, 8, 9};
 
-    std::vector<int> y = signal_1d::filter(f, signal_1d::diff_kernel<int>());
+    std::vector<int> y = signal_1d::conv(f, signal_1d::diff_kernel<int>());
+
+    for (auto i : y) {
+        std::cout << i << std::endl;
+    }
 
     std::vector<int> gt{1, 1, 1, 1, 1, 1, 1, 1, 1, -9};
 

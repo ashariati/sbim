@@ -23,6 +23,11 @@
         <remap from="/layout_segments" to="/layout_extractor_node/layout_segments"/>
     </node>
 
+    <node pkg="sbim_visualizations" type="door_visualization" name="door_visualization">
+        <param name="marker_ns" value="doors" />
+        <remap from="/doors" to="/door_detector_node/doors"/>
+    </node>
+
     <node pkg="sbim_visualizations" type="floorplan_visualization" name="floorplan_visualization">
         <param name="marker_ns" value="floorplan" />
         <remap from="/floorplan" to="/floorplan_estimation_node/floorplan"/>
