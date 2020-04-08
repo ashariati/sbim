@@ -10,6 +10,14 @@
 namespace signal_1d {
 
     template<typename T>
+    void print_vector(const std::vector<T> &vec) {
+        for (auto &y : vec) {
+            std::cout << y << " ";
+        }
+        std::cout << std::endl << std::endl;
+    }
+
+    template<typename T>
     std::vector<int> histogram_counts(const std::vector<T> &signal, const T min, const T max, const T bin_width) {
 
         size_t num_bins = std::ceil((max - min) / bin_width);
@@ -28,19 +36,17 @@ namespace signal_1d {
     }
 
     template<typename T>
-    std::vector<T> filter(const std::vector<T> &f, const std::vector<T> &g) {
+    std::vector<T> conv(const std::vector<T> &f, const std::vector<T> &g) {
 
-        size_t m = f.size();
-        size_t n = g.size();
+        int m = f.size();
+        int n = g.size();
 
         std::vector<T> y(m + n - 1, 0);
-        for (size_t k = 0; k < y.size(); ++k) {
+        for (int k = 0; k < y.size(); ++k) {
 
-            intmax_t j0 = static_cast<intmax_t>(k) - static_cast<intmax_t>(n) + 1;
-            for (size_t j = std::max(intmax_t(0), j0); j <= std::min(k, m); ++j) {
-
+            int j0 = k - n + 1;
+            for (int j = std::max(0, j0); j <= std::min(k, m - 1); ++j) {
                 y[k] += f[j] * g[k - j];
-
             }
 
         }
@@ -63,7 +69,7 @@ namespace signal_1d {
         std::transform(f.begin(), f.end(), f_shift.begin(), [min_f](T t) { return t - min_f; });
 
         // first derivative
-        std::vector<T> df = filter<T>(f_shift, diff_kernel<T>());
+        std::vector<T> df = conv<T>(f_shift, diff_kernel<T>());
 
         // ensures first of repeated value selected
         for (auto &di : df) {
