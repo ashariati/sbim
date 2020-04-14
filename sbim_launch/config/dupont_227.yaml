@@ -1,0 +1,32 @@
+# initial synchronization
+/scan_aggregator/duration: 0.2
+/scan_aggregator/sensor_calibration: [0.99985105587, -0.00226612816, -0.01710937567,  0.07378442787,
+                                      0.00807414904,  0.93758565425,  0.34766068092,  0.09010800391,
+                                      0.01525366152, -0.34774704255,  0.93746430343, -0.11807021184,
+                                      0.00000000000,  0.00000000000,  0.00000000000,  1.00000000000]
+
+# compass
+/point_cloud_compass_node/manhattan_world: true
+
+# scene parsing
+/plane_detector_node/scan_range: 10.0
+/plane_detector_node/min_intensity: 10000.0
+/layout_extractor_node/min_cluster_size: 700
+/layout_extractor_node/distance_threshold: 0.15
+/layout_extractor_node/cluster_tolerance: 0.4
+/layout_extractor_node/filter_leaf_size: 0.03
+
+# SLAM
+/planar_slam_node/pose_window: 50
+/planar_slam_node/sigma_t: 0.02
+/planar_slam_node/sigma_d: 0.04
+/planar_slam_node/association_range: 0.3
+
+# floorplan estimation
+/floorplan_estimation_node/speculation_horizon: 0
+/floorplan_estimation_node/min_free_ratio: 0.0
+/floorplan_estimation_node/boundary_coverage_threshold: 1.5
+/floorplan_estimation_node/boundary_height_threshold: 2.5
+
+# visualization
+/floorplan_visualization/boundary_height: 2.0

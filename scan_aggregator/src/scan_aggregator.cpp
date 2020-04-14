@@ -25,7 +25,8 @@ class ScanAggregator {
     float frequency_;
     std::string cloud_frame_id_;
     std::string pose_frame_id_;
-    Eigen::Isometry3f G_vs_;
+
+    Eigen::Isometry3f G_sv_;
 
     message_filters::Subscriber<PointCloud> pc_sub_;
     message_filters::Subscriber<nav_msgs::Odometry> odom_sub_;
@@ -41,7 +42,7 @@ public:
     ScanAggregator() : nh_("~"), pc_sub_(nh_, "/scan", 20),
                        odom_sub_(nh_, "/odometry", 100),
                        sync_(Policy(20), ScanAggregator::pc_sub_, ScanAggregator::odom_sub_),
-                       G_vs_(Eigen::Isometry3f::Identity()) {
+                       G_sv_(Eigen::Isometry3f::Identity()) {
 
         nh_.param<std::string>("cloud_frame_id", cloud_frame_id_, "vehicle");
         nh_.param<std::string>("pose_frame_id", pose_frame_id_, "local");
@@ -55,14 +56,14 @@ public:
                                        {1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0,
                                         1.0});
 
-        Eigen::Matrix3f R_vs;
-        R_vs << calibration_parameters[0], calibration_parameters[1], calibration_parameters[2],
+        Eigen::Matrix3f R_sv;
+        R_sv << calibration_parameters[0], calibration_parameters[1], calibration_parameters[2],
                 calibration_parameters[4], calibration_parameters[5], calibration_parameters[6],
                 calibration_parameters[8], calibration_parameters[9], calibration_parameters[10];
-        Eigen::Vector3f t_vs;
-        t_vs << calibration_parameters[3], calibration_parameters[7], calibration_parameters[11];
-        G_vs_.translate(t_vs);
-        G_vs_.rotate(R_vs);
+        Eigen::Vector3f t_sv;
+        t_sv << calibration_parameters[3], calibration_parameters[7], calibration_parameters[11];
+        G_sv_.translate(t_sv);
+        G_sv_.rotate(R_sv);
 
         sync_.registerCallback(boost::bind(&ScanAggregator::callback, this, _1, _2));
         cloud_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("aggregate_scan", 10);
@@ -120,7 +121,7 @@ public:
         tf::poseMsgToEigen(odom_msg->pose.pose, G);
 
         PointCloud::Ptr vehicle_cloud(new PointCloud());
-        pcl::transformPointCloud(*cloud_msg, *vehicle_cloud, G_vs_);
+        pcl::transformPointCloud(*cloud_msg, *vehicle_cloud, G_sv_.inverse());
         cloud_buffer_.emplace_back(vehicle_cloud, G);
 
     }

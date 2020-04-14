@@ -6,7 +6,12 @@
     <include file="$(find scan_aggregator)/launch/exyn_aggregator.launch" />
     -->
 
+    <!--
     <rosparam command="load" file="$(find sbim_launch)/config/monstar_towne_levine.yaml" />
+    <include file="$(find scan_aggregator)/launch/monstar_aggregator.launch" />
+    -->
+
+    <rosparam command="load" file="$(find sbim_launch)/config/dupont_227.yaml" />
     <include file="$(find scan_aggregator)/launch/monstar_aggregator.launch" />
 
     <include file="$(find structural_compass)/launch/point_cloud_compass.launch" />
