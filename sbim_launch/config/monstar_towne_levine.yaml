@@ -10,7 +10,7 @@
 
 # scene parsing
 /plane_detector_node/scan_range: 10.0
-/plane_detector_node/min_intensity: 10000.0
+/plane_detector_node/min_intensity: 8000.0
 /layout_extractor_node/min_cluster_size: 700
 /layout_extractor_node/distance_threshold: 0.15
 /layout_extractor_node/cluster_tolerance: 0.4
@@ -29,4 +29,7 @@
 /floorplan_estimation_node/boundary_height_threshold: 2.5
 
 # visualization
-/floorplan_visualization/boundary_height: 2.0
+/floorplan_visualization/boundary_height: 1.0
+/floorplan_visualization/draw_graph: false
+/layout_cloud_transformer/cloud_window: 50
+/object_cloud_transformer/cloud_window: 50

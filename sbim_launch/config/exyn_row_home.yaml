@@ -24,3 +24,4 @@
 # visualization
 /floorplan_visualization/draw_graph: false
 /floorplan_visualization/boundary_height: 0.3
+/compass_cloud_transformer/cloud_window: 30

@@ -13,7 +13,6 @@
     <node pkg="scene_parsing" type="cloud_transformer_node" name="compass_cloud_transformer">
         <remap from="/trajectory" to="/planar_slam_node/trajectory" />
         <remap from="/transformed_scan" to="/point_cloud_compass_node/transformed_scan" />
-        <param name="cloud_window" value="10" />
     </node>
 
     <node pkg="scene_parsing" type="cloud_transformer_node" name="layout_cloud_transformer">
@@ -21,7 +20,7 @@
         <remap from="/transformed_scan" to="/layout_extractor_node/cloud_segments" />
     </node>
 
-    <node pkg="scene_parsing" type="cloud_transformer_node" name="object_cloud_transform">
+    <node pkg="scene_parsing" type="cloud_transformer_node" name="object_cloud_transformer">
         <remap from="/trajectory" to="/planar_slam_node/trajectory" />
         <remap from="/transformed_scan" to="/layout_extractor_node/object_cloud" />
     </node>
