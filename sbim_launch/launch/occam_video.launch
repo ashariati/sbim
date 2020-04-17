@@ -1,0 +1,26 @@
+<launch>
+
+
+    <!--
+    <rosparam command="load" file="$(find sbim_launch)/config/exyn_row_home.yaml" />
+    <include file="$(find scan_aggregator)/launch/exyn_aggregator.launch" />
+    -->
+
+    <!--
+    <rosparam command="load" file="$(find sbim_launch)/config/monstar_towne_levine.yaml" />
+    <include file="$(find scan_aggregator)/launch/monstar_aggregator.launch" />
+    -->
+
+    <rosparam command="load" file="$(find sbim_launch)/config/dupont_227.yaml" />
+    <include file="$(find scan_aggregator)/launch/monstar_aggregator.launch" />
+
+    <include file="$(find structural_compass)/launch/point_cloud_compass.launch" />
+    <include file="$(find scene_parsing)/launch/scene_parsing.launch" />
+    <include file="$(find planar_slam)/launch/planar_slam.launch" />
+
+    <include file="$(find tf_publishers)/launch/visualization_tfs.launch"/>
+    <include file="$(find sbim_visualizations)/launch/sbim_visualizations.launch"/>
+
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find sbim_visualizations)/rviz/occam_video.rviz"/>
+
+</launch>

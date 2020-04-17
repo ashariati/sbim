@@ -18,22 +18,28 @@ private:
     ros::Publisher pub_;
 
     std::string marker_ns_;
-    float a_;
     float r_;
     float g_;
     float b_;
+
+    float plane_length_;
+    float plane_height_;
+    float plane_width_;
 
 public:
 
     ~PrincipalPlanesVisualization() = default;
 
-    PrincipalPlanesVisualization() : nh_("~"), marker_ns_(""), a_(0), r_(0), g_(0), b_(0) {
+    PrincipalPlanesVisualization() : nh_("~"), marker_ns_(""), r_(0), g_(0), b_(0), plane_length_(0), plane_height_(0),
+                                     plane_width_(0) {
 
         nh_.param<std::string>("marker_ns", marker_ns_, "principal_planes");
-        nh_.param<float>("alpha", a_, 1.0);
         nh_.param<float>("red", r_, 1.0);
         nh_.param<float>("green", g_, 0.75);
         nh_.param<float>("blue", b_, 0.0);
+        nh_.param<float>("plane_length", plane_length_, 500);
+        nh_.param<float>("plane_height", plane_height_, 0.2);
+        nh_.param<float>("plane_width", plane_width_, 4.0);
 
         sub_ = nh_.subscribe<sbim_msgs::PrincipalPlaneArray>("/planes", 1,
                                                              boost::bind(&PrincipalPlanesVisualization::callback,
@@ -55,16 +61,30 @@ public:
             marker.type = visualization_msgs::Marker::TRIANGLE_LIST;
             marker.action = visualization_msgs::Marker::ADD;
 
-            float width = (p.label.data != "0") ? 10.0 : 4.0;
-            std::vector<Eigen::Vector3f> triangles = sbim_visualizations::planeTriangles(
-                    Eigen::Vector4f(p.plane.coef[0], p.plane.coef[1], p.plane.coef[2], p.plane.coef[3]),
-                    width, 4.0);
+            std::vector<Eigen::Vector3f> triangles;
+            if (p.label.data != "0") {
+                triangles = sbim_visualizations::planeTriangles(
+                        Eigen::Vector4f(p.plane.coef[0], p.plane.coef[1], p.plane.coef[2], p.plane.coef[3]),
+                        plane_length_, plane_height_);
+            } else {
+                triangles = sbim_visualizations::planeTriangles(
+                        Eigen::Vector4f(p.plane.coef[0], p.plane.coef[1], p.plane.coef[2], p.plane.coef[3]),
+                        plane_width_, plane_width_);
+            }
+
             for (auto t : triangles) {
                 geometry_msgs::Point pt;
                 pt.x = t[0];
                 pt.y = t[1];
                 pt.z = t[2];
                 marker.points.push_back(pt);
+
+                std_msgs::ColorRGBA color;
+                color.a = 1.0;
+                color.r = r_;
+                color.g = g_;
+                color.b = b_;
+                marker.colors.push_back(color);
             }
 
             marker.pose.orientation.x = 0.0;
@@ -75,11 +95,6 @@ public:
             marker.scale.x = 1.0;
             marker.scale.y = 1.0;
             marker.scale.z = 1.0;
-
-            marker.color.a = a_;
-            marker.color.r = r_;
-            marker.color.g = g_;
-            marker.color.b = b_;
 
             marker_array.markers.push_back(marker);
 

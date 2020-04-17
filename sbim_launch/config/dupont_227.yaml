@@ -31,4 +31,5 @@
 # visualization
 /floorplan_visualization/boundary_height: 2.0
 /floorplan_visualization/draw_graph: false
-/compass_cloud_transformer/cloud_window: 30
+/layout_cloud_transformer/cloud_window: 50
+/object_cloud_transformer/cloud_window: 50

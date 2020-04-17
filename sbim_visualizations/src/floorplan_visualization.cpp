@@ -202,9 +202,9 @@ public:
 
                 std_msgs::ColorRGBA color;
                 color.a = 1.0;
-                color.r = 0.0;
-                color.g = 1.0;
-                color.b = 0.0;
+                color.r = 0.5;
+                color.g = 0.0;
+                color.b = 0.5;
                 floorplan_marker.colors.push_back(color);
             }
 
@@ -283,9 +283,12 @@ public:
 
                     std_msgs::ColorRGBA color;
                     color.a = 1.0;
-                    color.r = 1.0;
-                    color.g = 0.0;
-                    color.b = 0.0;
+                    // color.r = 1.0;
+                    // color.g = 0.0;
+                    // color.b = 0.0;
+                    color.r = 0.0;
+                    color.g = 0.75;
+                    color.b = 1.0;
                     boundary_marker.colors.push_back(color);
                 }
 
