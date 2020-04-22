@@ -11,25 +11,25 @@
 # scene parsing
 /plane_detector_node/scan_range: 10.0
 /plane_detector_node/min_intensity: 10000.0
-/layout_extractor_node/min_cluster_size: 700
-/layout_extractor_node/distance_threshold: 0.15
-/layout_extractor_node/cluster_tolerance: 0.4
+/layout_extractor_node/min_cluster_size: 1000
+/layout_extractor_node/distance_threshold: 0.1
+/layout_extractor_node/cluster_tolerance: 0.2
 /layout_extractor_node/filter_leaf_size: 0.03
 
 # SLAM
 /planar_slam_node/pose_window: 50
-/planar_slam_node/sigma_t: 0.02
-/planar_slam_node/sigma_d: 0.04
-/planar_slam_node/association_range: 0.3
+/planar_slam_node/sigma_t: 0.01
+/planar_slam_node/sigma_d: 0.03
+/planar_slam_node/association_range: 0.1
 
 # floorplan estimation
 /floorplan_estimation_node/speculation_horizon: 0
 /floorplan_estimation_node/min_free_ratio: 0.0
-/floorplan_estimation_node/boundary_coverage_threshold: 1.5
+/floorplan_estimation_node/boundary_coverage_threshold: 0.2
 /floorplan_estimation_node/boundary_height_threshold: 2.5
 
 # visualization
-/floorplan_visualization/boundary_height: 2.0
+/floorplan_visualization/boundary_height: 0.3
 /floorplan_visualization/draw_graph: false
 /layout_cloud_transformer/cloud_window: 50
 /object_cloud_transformer/cloud_window: 50
