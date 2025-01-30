@@ -1,49 +1,49 @@
-//
-// Created by armon on 1/20/20.
-//
-
-#include <ros/ros.h>
-#include <nav_msgs/Odometry.h>
+#include <rclcpp/rclcpp.hpp>
+#include <nav_msgs/msg/odometry.hpp>
+#include <geometry_msgs/msg/transform_stamped.hpp>
 #include <tf2_ros/transform_broadcaster.h>
 
-class OdomToTFNode {
+class OdomToTFNode : public rclcpp::Node {
 
-private:
-    ros::NodeHandle nh_;
-    ros::Subscriber sub_;
-    tf2_ros::TransformBroadcaster tf_broadcaster_;
+    private:
 
-public:
+        rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_;
+        std::shared_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
 
-    OdomToTFNode() : nh_("~") {
-        sub_ = nh_.subscribe<nav_msgs::Odometry>("/odometry", 1, boost::bind(&OdomToTFNode::callback, this, _1));
-    }
+    public:
 
-    void callback(const nav_msgs::Odometry::ConstPtr odom_msg) {
+        OdomToTFNode() : Node("odom_to_tf") {
+            tf_broadcaster_ = std::make_shared<tf2_ros::TransformBroadcaster>(this);
+            sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
+                    "/odometry", 1, std::bind(&OdomToTFNode::callback, this, std::placeholders::_1));
+        }
 
-        geometry_msgs::TransformStamped transform;
-        transform.header.stamp = odom_msg->header.stamp;
-        transform.header.frame_id = odom_msg->header.frame_id;
-        transform.child_frame_id = "vehicle";
+        void callback(const nav_msgs::msg::Odometry::SharedPtr odom_msg) {
 
-        transform.transform.rotation = odom_msg->pose.pose.orientation;
-        transform.transform.translation.x = odom_msg->pose.pose.position.x;
-        transform.transform.translation.y = odom_msg->pose.pose.position.y;
-        transform.transform.translation.z = odom_msg->pose.pose.position.z;
+            geometry_msgs::msg::TransformStamped transform;
+            transform.header.stamp = odom_msg->header.stamp;
+            transform.header.frame_id = odom_msg->header.frame_id;
+            transform.child_frame_id = "vehicle";
 
-        tf_broadcaster_.sendTransform(transform);
+            transform.transform.rotation = odom_msg->pose.pose.orientation;
+            transform.transform.translation.x = odom_msg->pose.pose.position.x;
+            transform.transform.translation.y = odom_msg->pose.pose.position.y;
+            transform.transform.translation.z = odom_msg->pose.pose.position.z;
 
-    }
+            tf_broadcaster_->sendTransform(transform);
+
+        }
 
 
 };
 
 int main(int argc, char *argv[]) {
 
-    ros::init(argc, argv, "odom_to_tf");
+    rclcpp::init(argc, argv);
 
-    OdomToTFNode odom_to_tf_node;
+    auto node = std::make_shared<OdomToTFNode>();
 
-    ros::spin();
-
+    rclcpp::spin(node);
+    rclcpp::shutdown();
+    return 0;
 }

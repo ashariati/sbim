@@ -1,55 +1,43 @@
-//
-// Created by armon on 2/26/20.
-//
+#include <rclcpp/rclcpp.hpp>
+#include <sbim_msgs/msg/trajectory.hpp>
+#include <geometry_msgs/msg/pose_array.hpp>
 
-#include <ros/ros.h>
-
-#include <sbim_msgs/Trajectory.h>
-#include <geometry_msgs/PoseArray.h>
-
-class TrajectoryVisualization {
+class TrajectoryVisualization : public rclcpp::Node {
 
 private:
 
-    ros::NodeHandle nh_;
-    ros::Subscriber sub_;
-    ros::Publisher pub_;
+    rclcpp::Subscription<sbim_msgs::msg::Trajectory>::SharedPtr sub_;
+    rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr pub_;
 
 public:
 
     ~TrajectoryVisualization() = default;
 
-    TrajectoryVisualization() : nh_("~") {
+    TrajectoryVisualization() : Node("trajectory_visualization") {
 
-        sub_ = nh_.subscribe<sbim_msgs::Trajectory>("/trajectory", 1,
-                                                    boost::bind(&TrajectoryVisualization::callback,
-                                                                this, _1));
-        pub_ = nh_.advertise<geometry_msgs::PoseArray>("trajectory_visualization", 0);
+        sub_ = this->create_subscription<sbim_msgs::msg::Trajectory>(
+            "/trajectory", 1, std::bind(&TrajectoryVisualization::callback, this, std::placeholders::_1));
+        pub_ = this->create_publisher<geometry_msgs::msg::PoseArray>("trajectory_visualization", 10);
     }
 
-    void callback(const sbim_msgs::Trajectory::ConstPtr &trajectory) {
+    void callback(const sbim_msgs::msg::Trajectory::SharedPtr trajectory) {
 
-        geometry_msgs::PoseArray pose_array;
+        geometry_msgs::msg::PoseArray pose_array;
         pose_array.header.frame_id = trajectory->poses[0].header.frame_id;
-        pose_array.header.stamp = ros::Time();
+        pose_array.header.stamp = this->now();
         for (auto p : trajectory->poses) {
             pose_array.poses.push_back(p.pose);
         }
 
-        pub_.publish(pose_array);
-
+        pub_->publish(pose_array);
     }
-
 };
 
 int main(int argc, char *argv[]) {
 
-    ros::init(argc, argv, "trajector_visualization");
-
-    TrajectoryVisualization trajectory_visualization;
-
-    ros::spin();
-
+    rclcpp::init(argc, argv);
+    auto node = std::make_shared<TrajectoryVisualization>();
+    rclcpp::spin(node);
+    rclcpp::shutdown();
     return 0;
 }
-

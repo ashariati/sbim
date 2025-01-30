@@ -2,55 +2,53 @@
 // Created by armon on 1/30/20.
 //
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
+#include <tf2_eigen/tf2_eigen.hpp>
 #include <tf2_ros/transform_broadcaster.h>
-#include <geometry_msgs/TransformStamped.h>
-#include <eigen_conversions/eigen_msg.h>
+#include <geometry_msgs/msg/transform_stamped.hpp>
+
 #include <eigen3/Eigen/Dense>
 
-class TransformToTFNode {
+class TransformToTFNode : public rclcpp::Node {
 
 private:
-    ros::NodeHandle nh_;
-    ros::Subscriber sub_;
+    rclcpp::Subscription<geometry_msgs::msg::TransformStamped>::SharedPtr sub_;
     bool flip_transform_;
-    tf2_ros::TransformBroadcaster tf_broadcaster_;
+    std::shared_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
 
 public:
 
-    TransformToTFNode() : nh_("~") {
-        sub_ = nh_.subscribe<geometry_msgs::TransformStamped>("/transform", 1,
-                                                              boost::bind(&TransformToTFNode::callback, this, _1));
+    TransformToTFNode() : Node("transform_to_tf") {
 
-        nh_.param<bool>("flip_transform", flip_transform_, false);
+        this->declare_parameter<bool>("flip_transform", false);
+        flip_transform_ = this->get_parameter("flip_transform").as_bool();
+
+        tf_broadcaster_ = std::make_shared<tf2_ros::TransformBroadcaster>(this);
+        sub_ = this->create_subscription<geometry_msgs::msg::TransformStamped>(
+            "/transform", 1, std::bind(&TransformToTFNode::callback, this, std::placeholders::_1));
     }
 
-    void callback(const geometry_msgs::TransformStamped::ConstPtr &transform_msg) {
+    void callback(const geometry_msgs::msg::TransformStamped::SharedPtr transform_msg) {
 
-        Eigen::Isometry3d G;
-        tf::transformMsgToEigen(transform_msg->transform, G);
+        Eigen::Isometry3d G = tf2::transformToEigen(*transform_msg);
 
-        geometry_msgs::TransformStamped transform;
+        geometry_msgs::msg::TransformStamped transform;
         transform.header.stamp = transform_msg->header.stamp;
         // transform.header.stamp = ros::Time::now();
 
         if (flip_transform_) {
             G = G.inverse();
-
+            transform = tf2::eigenToTransform(G);
             transform.header.frame_id = transform_msg->child_frame_id;
             transform.child_frame_id = transform_msg->header.frame_id;
 
         } else {
-
+            transform = tf2::eigenToTransform(G);
             transform.header.frame_id = transform_msg->header.frame_id;
             transform.child_frame_id = transform_msg->child_frame_id;
-
         }
 
-        tf::transformEigenToMsg(G, transform.transform);
-
-
-        tf_broadcaster_.sendTransform(transform);
+        tf_broadcaster_->sendTransform(transform);
 
     }
 
@@ -58,11 +56,9 @@ public:
 };
 
 int main(int argc, char *argv[]) {
-
-    ros::init(argc, argv, "transform_to_tf");
-
-    TransformToTFNode transform_to_tf_node;
-
-    ros::spin();
-
+    rclcpp::init(argc, argv);
+    auto node = std::make_shared<TransformToTFNode>();
+    rclcpp::spin(node);
+    rclcpp::shutdown();
+    return 0;
 }

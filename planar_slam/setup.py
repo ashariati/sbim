@@ -1,15 +1,33 @@
-## ! DO NOT MANUALLY INVOKE THIS setup.py, USE CATKIN INSTEAD
+from setuptools import setup
+import os
+from glob import glob
 
-from distutils.core import setup
-from catkin_pkg.python_setup import generate_distutils_setup
+package_name = 'planar_slam'
 
-# fetch values from package.xml
-setup_args = generate_distutils_setup(
-        package_dir={
-            'planar_slam' : 'src/planar_slam',
-            'occamsam' : 'src/occamsam/occamsam'}, 
-        packages=['planar_slam', 'occamsam']
-        )
-
-setup(**setup_args)
-
+setup(
+    name=package_name,
+    version='0.0.0',
+    packages=[package_name, 'occamsam'],
+    package_dir={
+        package_name: 'src/' + package_name,
+        'occamsam': 'src/' + package_name + '/occamsam/occamsam'
+    },
+    data_files=[
+        ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
+        ('share/' + package_name, ['package.xml']),
+        (os.path.join('share', package_name), glob('launch/*.launch')),
+        (os.path.join('share', package_name, 'config'), glob('config/*')),
+    ],
+    install_requires=['setuptools'],
+    zip_safe=True,
+    maintainer='armon',
+    maintainer_email='armon@todo.todo',
+    description='The planar_slam package',
+    license='TODO',
+    tests_require=['pytest'],
+    entry_points={
+        'console_scripts': [
+            'planar_slam_node = planar_slam.planar_slam.planar_slam_node:main',
+        ],
+    },
+)

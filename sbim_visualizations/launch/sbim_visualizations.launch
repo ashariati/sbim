@@ -1,34 +1,34 @@
 <launch>
 
-    <node pkg="sbim_visualizations" type="principal_directions_visualization" name="principal_directions_visualization">
+    <node pkg="sbim_visualizations" exec="principal_directions_visualization" name="principal_directions_visualization">
         <remap from="/principal_directions" to="/point_cloud_compass_node/principal_directions"/>
     </node>
 
-    <node pkg="sbim_visualizations" type="principal_planes_visualization" name="local_planes_visualization">
+    <node pkg="sbim_visualizations" exec="principal_planes_visualization" name="local_planes_visualization">
         <param name="marker_ns" value="local_planes" />
         <remap from="/planes" to="/plane_detector_node/planes"/>
     </node>
 
-    <node pkg="sbim_visualizations" type="principal_planes_visualization" name="layout_planes_visualization">
+    <node pkg="sbim_visualizations" exec="principal_planes_visualization" name="layout_planes_visualization">
         <param name="marker_ns" value="layout_planes" />
         <remap from="/planes" to="/planar_slam_node/layout_planes"/>
     </node>
 
-    <node pkg="sbim_visualizations" type="trajectory_visualization" name="trajectory_visualization">
+    <node pkg="sbim_visualizations" exec="trajectory_visualization" name="trajectory_visualization">
         <remap from="/trajectory" to="/planar_slam_node/trajectory"/>
     </node>
 
-    <node pkg="sbim_visualizations" type="layout_segment_visualization" name="layout_segment_visualization">
+    <node pkg="sbim_visualizations" exec="layout_segment_visualization" name="layout_segment_visualization">
         <param name="marker_ns" value="layout_segments" />
         <remap from="/layout_segments" to="/layout_extractor_node/layout_segments"/>
     </node>
 
-    <node pkg="sbim_visualizations" type="door_visualization" name="door_visualization">
+    <node pkg="sbim_visualizations" exec="door_visualization" name="door_visualization">
         <param name="marker_ns" value="doors" />
         <remap from="/doors" to="/door_detector_node/doors"/>
     </node>
 
-    <node pkg="sbim_visualizations" type="floorplan_visualization" name="floorplan_visualization">
+    <node pkg="sbim_visualizations" exec="floorplan_visualization" name="floorplan_visualization">
         <param name="marker_ns" value="floorplan" />
         <remap from="/floorplan" to="/floorplan_estimation_node/floorplan"/>
     </node>

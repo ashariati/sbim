@@ -35,7 +35,7 @@ PlaneDetector::scanDirection(const pcl::PointCloud<PointT> &point_cloud, const E
 
     std::vector<float> distances;
     for (size_t i = 0; i < d.rows(); ++i) {
-        if (!isnan(d[i])) {
+        if (!std::isnan(d[i])) {
             distances.push_back(d[i]);
         }
     }

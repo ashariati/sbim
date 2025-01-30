@@ -1,21 +1,14 @@
-//
-// Created by armon on 2/29/20.
-//
-
-#include <ros/ros.h>
-
-#include <sbim_msgs/LayoutSegmentArray.h>
-#include <visualization_msgs/MarkerArray.h>
-
+#include <rclcpp/rclcpp.hpp>
+#include <sbim_msgs/msg/layout_segment_array.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
 #include <sbim_visualizations/convex.h>
 
-class LayoutSegmentVisualization {
+class LayoutSegmentVisualization : public rclcpp::Node {
 
 private:
 
-    ros::NodeHandle nh_;
-    ros::Subscriber sub_;
-    ros::Publisher pub_;
+    rclcpp::Subscription<sbim_msgs::msg::LayoutSegmentArray>::SharedPtr sub_;
+    rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_;
 
     std::string marker_ns_;
 
@@ -23,29 +16,29 @@ public:
 
     ~LayoutSegmentVisualization() = default;
 
-    LayoutSegmentVisualization() : nh_("~"), marker_ns_("") {
+    LayoutSegmentVisualization() : Node("layout_segment_visualization"), marker_ns_("") {
 
-        nh_.param<std::string>("marker_ns", marker_ns_, "layout_segments");
+        this->declare_parameter<std::string>("marker_ns", "layout_segments");
+        this->get_parameter("marker_ns", marker_ns_);
 
-        sub_ = nh_.subscribe<sbim_msgs::LayoutSegmentArray>("/layout_segments", 1,
-                                                            boost::bind(&LayoutSegmentVisualization::callback,
-                                                                        this, _1));
-        pub_ = nh_.advertise<visualization_msgs::MarkerArray>("layout_segment_viz", 0);
+        sub_ = this->create_subscription<sbim_msgs::msg::LayoutSegmentArray>(
+            "/layout_segments", 1, std::bind(&LayoutSegmentVisualization::callback, this, std::placeholders::_1));
+        pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("layout_segment_viz", 10);
     }
 
-    void callback(const sbim_msgs::LayoutSegmentArray::ConstPtr &layout_segments) {
+    void callback(const sbim_msgs::msg::LayoutSegmentArray::SharedPtr layout_segments) {
 
-        visualization_msgs::MarkerArray marker_array;
+        visualization_msgs::msg::MarkerArray marker_array;
         size_t id = 0;
         for (auto &s : layout_segments->layout_segments) {
 
-            visualization_msgs::Marker marker;
+            visualization_msgs::msg::Marker marker;
             marker.header.frame_id = s.header.frame_id;
-            marker.header.stamp = ros::Time();
+            marker.header.stamp = this->now();
             marker.ns = marker_ns_;
             marker.id = id;
-            marker.type = visualization_msgs::Marker::TRIANGLE_LIST;
-            marker.action = visualization_msgs::Marker::ADD;
+            marker.type = visualization_msgs::msg::Marker::TRIANGLE_LIST;
+            marker.action = visualization_msgs::msg::Marker::ADD;
 
             std::vector<std::vector<double>> vertices;
             for (auto &vertex : s.vertices) {
@@ -55,7 +48,7 @@ public:
 
             std::vector<std::vector<double>> triangles = sbim_visualizations::convexToTriangles(vertices);
             for (auto &t : triangles) {
-                geometry_msgs::Point pt;
+                geometry_msgs::msg::Point pt;
                 pt.x = t[0];
                 pt.y = t[1];
                 pt.z = t[2];
@@ -88,20 +81,15 @@ public:
             id += 1;
         }
 
-        pub_.publish(marker_array);
-
+        pub_->publish(marker_array);
     }
-
 };
 
 int main(int argc, char *argv[]) {
 
-    ros::init(argc, argv, "layout_segment_visualization");
-
-    LayoutSegmentVisualization layout_segment_visualization;
-
-    ros::spin();
-
+    rclcpp::init(argc, argv);
+    auto node = std::make_shared<LayoutSegmentVisualization>();
+    rclcpp::spin(node);
+    rclcpp::shutdown();
     return 0;
 }
-

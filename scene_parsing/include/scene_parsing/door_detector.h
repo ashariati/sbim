@@ -106,7 +106,7 @@ namespace scene_parsing {
             // compute distances along line projection
             std::vector<double> distances;
             for (auto &p : cropped_cloud.points) {
-                if (!pcl::isFinite(p)) {
+                if (!std::isfinite(p.x) || !std::isfinite(p.y)) {
                     continue;
                 }
                 distances.push_back((n_hat[0] * (p.x - p_0[0])) + (n_hat[1] * (p.y - p_0[1])));

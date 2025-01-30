@@ -1,37 +1,32 @@
-//
-// Created by armon on 2/1/20.
-//
+#include <rclcpp/rclcpp.hpp>
+#include <sbim_msgs/msg/principal_direction_array.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
 
-#include <ros/ros.h>
-#include <sbim_msgs/PrincipalDirectionArray.h>
-#include <visualization_msgs/MarkerArray.h>
-
-class PrincipalDirectionsVisualization {
+class PrincipalDirectionsVisualization : public rclcpp::Node {
 
 public:
 
     ~PrincipalDirectionsVisualization() = default;
 
-    PrincipalDirectionsVisualization() : nh_("~") {
-        sub_ = nh_.subscribe<sbim_msgs::PrincipalDirectionArray>("/principal_directions", 1,
-                                                                 boost::bind(&PrincipalDirectionsVisualization::callback,
-                                                                         this, _1));
-        pub_ = nh_.advertise<visualization_msgs::MarkerArray>("principal_direction_viz", 0);
+    PrincipalDirectionsVisualization() : Node("principal_directions_visualization") {
+        sub_ = this->create_subscription<sbim_msgs::msg::PrincipalDirectionArray>(
+            "/principal_directions", 1, std::bind(&PrincipalDirectionsVisualization::callback, this, std::placeholders::_1));
+        pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("principal_direction_viz", 10);
     }
 
-    void callback(const sbim_msgs::PrincipalDirectionArray::ConstPtr &directions) {
+    void callback(const sbim_msgs::msg::PrincipalDirectionArray::SharedPtr directions) {
 
-        visualization_msgs::MarkerArray marker_array;
+        visualization_msgs::msg::MarkerArray marker_array;
         int id = 0;
         for (auto d : directions->directions) {
 
-            visualization_msgs::Marker marker;
+            visualization_msgs::msg::Marker marker;
             marker.header.frame_id = directions->header.frame_id;
-            marker.header.stamp = ros::Time();
+            marker.header.stamp = this->now();
             marker.ns = "principal_directions";
             marker.id = id;
-            marker.type = visualization_msgs::Marker::ARROW;
-            marker.action = visualization_msgs::Marker::ADD;
+            marker.type = visualization_msgs::msg::Marker::ARROW;
+            marker.action = visualization_msgs::msg::Marker::ADD;
 
             marker.pose.position.x = 0.0;
             marker.pose.position.y = 0.0;
@@ -41,16 +36,16 @@ public:
             marker.pose.orientation.z = 0.0;
             marker.pose.orientation.w = 1.0;
 
-            geometry_msgs::Point start;
+            geometry_msgs::msg::Point start;
             start.x = 0.0;
             start.y = 0.0;
             start.z = 0.0;
-            geometry_msgs::Point end;
-            start.x = d.x / 2;
-            start.y = d.y / 2;
-            start.z = d.z / 2;
-            marker.points.push_back(end);
+            geometry_msgs::msg::Point end;
+            end.x = d.x / 2;
+            end.y = d.y / 2;
+            end.z = d.z / 2;
             marker.points.push_back(start);
+            marker.points.push_back(end);
 
             marker.scale.x = 0.05;
             marker.scale.y = 0.1;
@@ -66,26 +61,22 @@ public:
             id += 1;
         }
 
-        pub_.publish(marker_array);
-
+        pub_->publish(marker_array);
     }
 
 private:
 
-    ros::NodeHandle nh_;
-    ros::Subscriber sub_;
-    ros::Publisher pub_;
+    rclcpp::Subscription<sbim_msgs::msg::PrincipalDirectionArray>::SharedPtr sub_;
+    rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_;
 
 };
 
 
 int main(int argc, char *argv[]) {
 
-    ros::init(argc, argv, "pincipal_directions_visualization");
-
-    PrincipalDirectionsVisualization principal_directions_visualization;
-
-    ros::spin();
-
+    rclcpp::init(argc, argv);
+    auto node = std::make_shared<PrincipalDirectionsVisualization>();
+    rclcpp::spin(node);
+    rclcpp::shutdown();
     return 0;
 }

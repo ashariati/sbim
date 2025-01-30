@@ -1,23 +1,17 @@
-//
-// Created by armon on 3/2/20.
-//
-
 #include <unordered_map>
+#include <set>
 
-#include <ros/ros.h>
-
-#include <sbim_msgs/FloorplanArray.h>
-#include <visualization_msgs/MarkerArray.h>
-
+#include <rclcpp/rclcpp.hpp>
+#include <sbim_msgs/msg/floorplan_array.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
 #include <sbim_visualizations/convex.h>
 
-class FloorplanVisualization {
+class FloorplanVisualization : public rclcpp::Node {
 
 private:
 
-    ros::NodeHandle nh_;
-    ros::Subscriber sub_;
-    ros::Publisher pub_;
+    rclcpp::Subscription<sbim_msgs::msg::FloorplanArray>::SharedPtr sub_;
+    rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_;
 
     std::string marker_ns_;
     float boundary_height_;
@@ -30,28 +24,34 @@ public:
 
     ~FloorplanVisualization() = default;
 
-    FloorplanVisualization() : nh_("~"), marker_ns_("") {
+    FloorplanVisualization() : Node("floorplan_visualization"), marker_ns_(""), boundary_height_(2.5), graph_height_(1.25),
+                               draw_graph_(true), draw_boundary_(true) {
 
-        nh_.param<std::string>("marker_ns", marker_ns_, "floorplan");
-        nh_.param<float>("boundary_height", boundary_height_, 2.5);
-        nh_.param<float>("graph_height", graph_height_, 1.25);
-        nh_.param<bool>("draw_graph", draw_graph_, true);
-        nh_.param<bool>("draw_boundary", draw_boundary_, true);
+        this->declare_parameter<std::string>("marker_ns", "floorplan");
+        this->declare_parameter<float>("boundary_height", boundary_height_);
+        this->declare_parameter<float>("graph_height", graph_height_);
+        this->declare_parameter<bool>("draw_graph", draw_graph_);
+        this->declare_parameter<bool>("draw_boundary", draw_boundary_);
 
-        sub_ = nh_.subscribe<sbim_msgs::FloorplanArray>("/floorplan", 1,
-                                                        boost::bind(&FloorplanVisualization::callback,
-                                                               this, _1));
-        pub_ = nh_.advertise<visualization_msgs::MarkerArray>("floorplan_viz", 0);
+        this->get_parameter("marker_ns", marker_ns_);
+        this->get_parameter("boundary_height", boundary_height_);
+        this->get_parameter("graph_height", graph_height_);
+        this->get_parameter("draw_graph", draw_graph_);
+        this->get_parameter("draw_boundary", draw_boundary_);
+
+        sub_ = this->create_subscription<sbim_msgs::msg::FloorplanArray>(
+            "/floorplan", 1, std::bind(&FloorplanVisualization::callback, this, std::placeholders::_1));
+        pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("floorplan_viz", 10);
     }
 
-    void callback(const sbim_msgs::FloorplanArray::ConstPtr &floorplan_array) {
+    void callback(const sbim_msgs::msg::FloorplanArray::SharedPtr floorplan_array) {
 
-        visualization_msgs::MarkerArray marker_array;
+        visualization_msgs::msg::MarkerArray marker_array;
 
         size_t id = 0;
         for (auto &floorplan : floorplan_array->floorplans) {
 
-            visualization_msgs::Marker floorplan_marker = floorplanMarker(floorplan);
+            visualization_msgs::msg::Marker floorplan_marker = floorplanMarker(floorplan);
             floorplan_marker.header.frame_id = floorplan_array->header.frame_id;
             floorplan_marker.id = id;
             id += 1;
@@ -60,7 +60,7 @@ public:
 
             if (draw_boundary_) {
 
-                visualization_msgs::Marker boundary_marker = boundaryMarker(floorplan);
+                visualization_msgs::msg::Marker boundary_marker = boundaryMarker(floorplan);
                 boundary_marker.header.frame_id = floorplan_array->header.frame_id;
                 boundary_marker.id = id;
                 id += 1;
@@ -69,12 +69,12 @@ public:
             }
 
             if (draw_graph_) {
-                visualization_msgs::Marker nodes_marker;
+                visualization_msgs::msg::Marker nodes_marker;
                 nodes_marker.header.frame_id = floorplan_array->header.frame_id;
                 nodes_marker.id = id;
                 id += 1;
 
-                visualization_msgs::Marker edges_marker;
+                visualization_msgs::msg::Marker edges_marker;
                 edges_marker.header.frame_id = floorplan_array->header.frame_id;
                 edges_marker.id = id;
                 id += 1;
@@ -88,22 +88,22 @@ public:
 
         }
 
-        pub_.publish(marker_array);
+        pub_->publish(marker_array);
 
     }
 
-    void graphMarker(const sbim_msgs::Floorplan &floorplan, visualization_msgs::Marker &nodes_marker,
-                     visualization_msgs::Marker &edges_marker) {
+    void graphMarker(const sbim_msgs::msg::Floorplan &floorplan, visualization_msgs::msg::Marker &nodes_marker,
+                     visualization_msgs::msg::Marker &edges_marker) {
 
-        nodes_marker.header.stamp = ros::Time();
+        nodes_marker.header.stamp = this->now();
         nodes_marker.ns = marker_ns_;
-        nodes_marker.type = visualization_msgs::Marker::SPHERE_LIST;
-        nodes_marker.action = visualization_msgs::Marker::ADD;
+        nodes_marker.type = visualization_msgs::msg::Marker::SPHERE_LIST;
+        nodes_marker.action = visualization_msgs::msg::Marker::ADD;
 
-        edges_marker.header.stamp = ros::Time();
+        edges_marker.header.stamp = this->now();
         edges_marker.ns = marker_ns_;
-        edges_marker.type = visualization_msgs::Marker::LINE_LIST;
-        edges_marker.action = visualization_msgs::Marker::ADD;
+        edges_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
+        edges_marker.action = visualization_msgs::msg::Marker::ADD;
 
         for (auto &node : floorplan.nodes) {
 
@@ -119,14 +119,14 @@ public:
             mean[1] = mean[1] / n;
             mean[2] = mean[2] / n;
 
-            geometry_msgs::Point mu;
+            geometry_msgs::msg::Point mu;
             mu.x = mean[0];
             mu.y = mean[1];
             mu.z = mean[2] + graph_height_;
 
             nodes_marker.points.push_back(mu);
 
-            std_msgs::ColorRGBA color;
+            std_msgs::msg::ColorRGBA color;
             color.a = 1.0;
             color.r = 0.0;
             color.g = 0.0;
@@ -143,7 +143,7 @@ public:
             edges_marker.points.push_back(nodes_marker.points[u]);
             edges_marker.points.push_back(nodes_marker.points[v]);
 
-            std_msgs::ColorRGBA color;
+            std_msgs::msg::ColorRGBA color;
             color.a = 1.0;
             color.r = 0.0;
             color.g = 0.0;
@@ -174,13 +174,13 @@ public:
 
     }
 
-    visualization_msgs::Marker floorplanMarker(const sbim_msgs::Floorplan &floorplan) {
+    visualization_msgs::msg::Marker floorplanMarker(const sbim_msgs::msg::Floorplan &floorplan) {
 
-        visualization_msgs::Marker floorplan_marker;
-        floorplan_marker.header.stamp = ros::Time();
+        visualization_msgs::msg::Marker floorplan_marker;
+        floorplan_marker.header.stamp = this->now();
         floorplan_marker.ns = marker_ns_;
-        floorplan_marker.type = visualization_msgs::Marker::TRIANGLE_LIST;
-        floorplan_marker.action = visualization_msgs::Marker::ADD;
+        floorplan_marker.type = visualization_msgs::msg::Marker::TRIANGLE_LIST;
+        floorplan_marker.action = visualization_msgs::msg::Marker::ADD;
 
         for (auto &node : floorplan.nodes) {
 
@@ -194,13 +194,13 @@ public:
 
             std::vector<std::vector<double>> triangles = sbim_visualizations::convexToTriangles(vertices);
             for (auto &t : triangles) {
-                geometry_msgs::Point pt;
+                geometry_msgs::msg::Point pt;
                 pt.x = t[0];
                 pt.y = t[1];
                 pt.z = t[2];
                 floorplan_marker.points.push_back(pt);
 
-                std_msgs::ColorRGBA color;
+                std_msgs::msg::ColorRGBA color;
                 color.a = 1.0;
                 color.r = 0.5;
                 color.g = 0.0;
@@ -222,13 +222,13 @@ public:
         return floorplan_marker;
     }
 
-    visualization_msgs::Marker boundaryMarker(const sbim_msgs::Floorplan &floorplan) {
+    visualization_msgs::msg::Marker boundaryMarker(const sbim_msgs::msg::Floorplan &floorplan) {
 
-        visualization_msgs::Marker boundary_marker;
-        boundary_marker.header.stamp = ros::Time();
+        visualization_msgs::msg::Marker boundary_marker;
+        boundary_marker.header.stamp = this->now();
         boundary_marker.ns = marker_ns_;
-        boundary_marker.type = visualization_msgs::Marker::TRIANGLE_LIST;
-        boundary_marker.action = visualization_msgs::Marker::ADD;
+        boundary_marker.type = visualization_msgs::msg::Marker::TRIANGLE_LIST;
+        boundary_marker.action = visualization_msgs::msg::Marker::ADD;
 
         std::set<std::pair<size_t, size_t>> shared_edges;
         for (auto &e : floorplan.edges) {
@@ -275,13 +275,13 @@ public:
 
                 std::vector<std::vector<double>> triangles = sbim_visualizations::convexToTriangles(vertices);
                 for (auto &t : triangles) {
-                    geometry_msgs::Point pt;
+                    geometry_msgs::msg::Point pt;
                     pt.x = t[0];
                     pt.y = t[1];
                     pt.z = t[2];
                     boundary_marker.points.push_back(pt);
 
-                    std_msgs::ColorRGBA color;
+                    std_msgs::msg::ColorRGBA color;
                     color.a = 1.0;
                     // color.r = 1.0;
                     // color.g = 0.0;
@@ -313,12 +313,9 @@ public:
 
 int main(int argc, char *argv[]) {
 
-    ros::init(argc, argv, "floorplan_visualization");
-
-    FloorplanVisualization floorplan_visualization;
-
-    ros::spin();
-
+    rclcpp::init(argc, argv);
+    auto node = std::make_shared<FloorplanVisualization>();
+    rclcpp::spin(node);
+    rclcpp::shutdown();
     return 0;
 }
-

@@ -179,7 +179,7 @@ namespace structural_compass {
 
         for (auto p : point_cloud.points) {
 
-            if (!pcl_isfinite(p.x) || !pcl_isfinite(p.y))
+            if (!std::isfinite(p.x) || !std::isfinite(p.y))
                 continue;
 
             bool in_range_x = (p.x < radius) && (p.x > -radius);

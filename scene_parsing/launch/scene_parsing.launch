@@ -1,26 +1,26 @@
 <launch>
 
-    <node pkg="scene_parsing" type="plane_detector_node" name="plane_detector_node">
+    <node pkg="scene_parsing" exec="plane_detector_node" name="plane_detector_node">
         <remap from="/scan" to="/point_cloud_compass_node/transformed_scan" />
         <remap from="/principal_directions" to="/point_cloud_compass_node/principal_directions" />
     </node>
 
-    <node pkg="scene_parsing" type="layout_extractor_node" name="layout_extractor_node">
+    <node pkg="scene_parsing" exec="layout_extractor_node" name="layout_extractor_node">
         <remap from="/transformed_scan" to="/point_cloud_compass_node/transformed_scan" />
         <remap from="/layout_planes" to="/plane_detector_node/planes" />
     </node>
 
-    <node pkg="scene_parsing" type="cloud_transformer_node" name="compass_cloud_transformer">
+    <node pkg="scene_parsing" exec="cloud_transformer_node" name="compass_cloud_transformer">
         <remap from="/trajectory" to="/planar_slam_node/trajectory" />
         <remap from="/transformed_scan" to="/point_cloud_compass_node/transformed_scan" />
     </node>
 
-    <node pkg="scene_parsing" type="cloud_transformer_node" name="layout_cloud_transformer">
+    <node pkg="scene_parsing" exec="cloud_transformer_node" name="layout_cloud_transformer">
         <remap from="/trajectory" to="/planar_slam_node/trajectory" />
         <remap from="/transformed_scan" to="/layout_extractor_node/cloud_segments" />
     </node>
 
-    <node pkg="scene_parsing" type="cloud_transformer_node" name="object_cloud_transformer">
+    <node pkg="scene_parsing" exec="cloud_transformer_node" name="object_cloud_transformer">
         <remap from="/trajectory" to="/planar_slam_node/trajectory" />
         <remap from="/transformed_scan" to="/layout_extractor_node/object_cloud" />
     </node>

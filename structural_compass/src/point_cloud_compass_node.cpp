@@ -2,156 +2,182 @@
 // Created by armon on 1/16/20.
 //
 
-#include <ros/ros.h>
-#include <geometry_msgs/Vector3.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/TransformStamped.h>
+#include <rclcpp/rclcpp.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <geometry_msgs/msg/vector3.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/transform_stamped.hpp>
 #include <message_filters/subscriber.h>
-#include <message_filters/synchronizer.h>
 #include <message_filters/sync_policies/exact_time.h>
 #include <message_filters/sync_policies/approximate_time.h>
-#include <eigen_conversions/eigen_msg.h>
-#include <pcl_ros/point_cloud.h>
+#include <message_filters/time_synchronizer.h>
+#include <message_filters/synchronizer.h>
+#include <pcl_conversions/pcl_conversions.h>
+#include <tf2_eigen/tf2_eigen.hpp>
 
-#include <sbim_msgs/PrincipalDirectionArray.h>
+#include <deque>
+#include <memory>
+#include <sbim_msgs/msg/principal_direction_array.hpp>
 #include <structural_compass/structural_compass.h>
 
+using namespace std::chrono_literals;
 typedef pcl::PointCloud<pcl::PointXYZ> PointCloud;
-typedef message_filters::sync_policies::ApproximateTime<PointCloud, geometry_msgs::PoseStamped> Policy;
-// typedef message_filters::sync_policies::ExactTime<PointCloud, geometry_msgs::PoseStamped> Policy;
+typedef message_filters::sync_policies::ApproximateTime<PointCloud, geometry_msgs::msg::PoseStamped> Policy;
 
-class PointCloudCompassNode {
+class PointCloudCompassNode : public rclcpp::Node {
 
-    ros::NodeHandle nh_;
-    message_filters::Subscriber<PointCloud> pc_sub_;
-    message_filters::Subscriber<geometry_msgs::PoseStamped> pose_sub_;
-    message_filters::Synchronizer<Policy> pc_sync_;
-    ros::Publisher pd_pub_;
-    ros::Publisher rot_pub_;
-    ros::Publisher pc_pub_;
+    private:
+        message_filters::Subscriber<PointCloud> pc_sub_;
+        message_filters::Subscriber<geometry_msgs::msg::PoseStamped> pose_sub_;
+        message_filters::Synchronizer<Policy> pc_sync_;
 
-    bool manhattan_world_;
+        rclcpp::Publisher<sbim_msgs::msg::PrincipalDirectionArray>::SharedPtr pd_pub_;
+        rclcpp::Publisher<geometry_msgs::msg::TransformStamped>::SharedPtr rot_pub_;
+        rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pc_pub_;
 
-    float frequency_;
-    int queue_size_;
-    std::deque<std::tuple<PointCloud, geometry_msgs::PoseStamped>> message_queue_;
+        bool manhattan_world_;
 
-    std::unique_ptr<structural_compass::EntropyCompass> compass_;
+        float frequency_;
+        int queue_size_;
+        std::deque<std::tuple<PointCloud, geometry_msgs::msg::PoseStamped>> message_queue_;
 
-public:
+        std::unique_ptr<structural_compass::EntropyCompass> compass_;
 
-    PointCloudCompassNode() : nh_("~"),
-                              pc_sub_(nh_, "/scan", 1),
-                              pose_sub_(nh_, "/pose", 1),
-                              pc_sync_(Policy(10), pc_sub_, pose_sub_),
-                              manhattan_world_(false) {
+    public:
+        PointCloudCompassNode() : Node("point_cloud_compass_node"),
+        pc_sub_(this, "/scan", rmw_qos_profile_sensor_data),
+        pose_sub_(this, "/pose", rmw_qos_profile_sensor_data),
+        pc_sync_(Policy(10), pc_sub_, pose_sub_) {
 
-        nh_.param<float>("frequency", frequency_, 10.0);
-        nh_.param<int>("queue_size", queue_size_, 1);
-        nh_.param<bool>("manhattan_world", manhattan_world_, false);
 
-        compass_ = std::make_unique<structural_compass::EntropyCompass>();
-        pc_sync_.registerCallback(boost::bind(&PointCloudCompassNode::callback, this, _1, _2));
-        pd_pub_ = nh_.advertise<sbim_msgs::PrincipalDirectionArray>("principal_directions", 10);
-        rot_pub_ = nh_.advertise<geometry_msgs::TransformStamped>("compass_transform", 10);
-        pc_pub_ = nh_.advertise<sensor_msgs::PointCloud2>("transformed_scan", 10);
+            this->declare_parameter("frequency", 10.0);
+            this->declare_parameter("queue_size", 1);
+            this->declare_parameter("manhattan_world", false);
 
-    }
+            frequency_ = this->get_parameter("frequency").as_double();
+            queue_size_ = this->get_parameter("queue_size").as_int();
+            manhattan_world_ = this->get_parameter("manhattan_world").as_bool();
 
-    void loop() {
 
-        ros::Rate rate(frequency_);
-        while (ros::ok()) {
+            compass_ = std::make_unique<structural_compass::EntropyCompass>();
+            pc_sync_.registerCallback(std::bind(&PointCloudCompassNode::callback, this, std::placeholders::_1, std::placeholders::_2));
 
-            rate.sleep();
-            ros::spinOnce();
+            pd_pub_ = this->create_publisher<sbim_msgs::msg::PrincipalDirectionArray>("principal_directions", 10);
+            rot_pub_ = this->create_publisher<geometry_msgs::msg::TransformStamped>("compass_transform", 10);
+            pc_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("transformed_scan", 10);
 
-            if (message_queue_.size() < 1) {
-                continue;
+            RCLCPP_INFO(this->get_logger(), "PointCloudCompassNode initialized.");
+
+        }
+
+        void loop() {
+
+            rclcpp::Rate rate(frequency_);
+            while (rclcpp::ok()) {
+
+                rate.sleep();
+                rclcpp::spin_some(this->get_node_base_interface());
+
+                if (message_queue_.empty()) {
+                    continue;
+                }
+
+                auto message = message_queue_.front();
+                message_queue_.pop_front();
+
+                PointCloud P_s = std::get<0>(message);
+                geometry_msgs::msg::PoseStamped pose_msg = std::get<1>(message);
+
+                Eigen::Isometry3d G_ws;
+                tf2::fromMsg(pose_msg.pose, G_ws);
+                Eigen::Matrix3f R_ws = G_ws.rotation().cast<float>();
+
+                Eigen::Vector3f gravity;
+                gravity << -R_ws(2, 0), -R_ws(2, 1), -R_ws(2, 2);
+
+                Eigen::Matrix3f R_cs;
+                std::vector<Eigen::Vector3f> directions;
+                R_cs = compass_->principalDirections(P_s, R_ws, gravity, directions);
+
+                if (manhattan_world_) {
+                    directions.resize(3);
+                }
+
+                Eigen::Isometry3f G_cs = Eigen::Isometry3f::Identity();
+                G_cs.rotate(R_cs);
+
+                PointCloud P_c;
+                pcl::transformPointCloud(P_s, P_c, G_cs);
+
+                publish(P_c, R_cs, directions, pose_msg.header.stamp);
+
+            }
+        }
+
+        void callback(const PointCloud::ConstPtr &cloud_msg, const geometry_msgs::msg::PoseStamped::ConstSharedPtr &pose_msg) {
+
+            message_queue_.emplace_back(*cloud_msg, *pose_msg);
+
+            if (message_queue_.size() > queue_size_) {
+                message_queue_.pop_front();
             }
 
-            auto message = message_queue_.front();
-            message_queue_.pop_front();
+        }
 
-            PointCloud P_s = std::get<0>(message);
+        void publish(const PointCloud &P, const Eigen::Matrix3f &R, const std::vector<Eigen::Vector3f> &directions, rclcpp::Time stamp) {
 
-            geometry_msgs::PoseStamped pose_msg = std::get<1>(message);
-            Eigen::Isometry3d G_ws;
-            tf::poseMsgToEigen(pose_msg.pose, G_ws);
-            Eigen::Matrix3f R_ws = G_ws.rotation().cast<float>();
+            Eigen::Isometry3f G = Eigen::Isometry3f::Identity();
+            G.rotate(R);
 
-            Eigen::Vector3f gravity;
-            gravity << -R_ws(2, 0), -R_ws(2, 1), -R_ws(2, 2);
+            geometry_msgs::msg::TransformStamped transform;
+            transform.header.frame_id = "compass";
+            transform.header.stamp = stamp;
+            transform.child_frame_id = "vehicle";
 
-            Eigen::Matrix3f R_cs;
-            std::vector<Eigen::Vector3f> directions;
-            R_cs = compass_->principalDirections(P_s, R_ws, gravity, directions);
+            transform.transform.translation.x = G.translation().x();
+            transform.transform.translation.y = G.translation().y();
+            transform.transform.translation.z = G.translation().z();
 
-            if (manhattan_world_) {
-                directions.resize(3);
+            Eigen::Quaternionf quat(G.rotation());
+            transform.transform.rotation.x = quat.x();
+            transform.transform.rotation.y = quat.y();
+            transform.transform.rotation.z = quat.z();
+            transform.transform.rotation.w = quat.w();
+
+            // tf2::toMsg(G, transform.transform);
+            // transform.transform = tf2::toMsg(static_cast<Eigen::Isometry3d>(G.cast<double>()));
+            // transform.transform = tf2::toMsg(G.cast<double>());
+            rot_pub_->publish(transform);
+
+            sbim_msgs::msg::PrincipalDirectionArray principal_directions;
+            principal_directions.header.frame_id = "compass";
+            principal_directions.header.stamp = stamp;
+            for (auto &d : directions) {
+                geometry_msgs::msg::Vector3 v;
+                v.x = d.x();
+                v.y = d.y();
+                v.z = d.z();
+                principal_directions.directions.push_back(v);
             }
+            pd_pub_->publish(principal_directions);
 
-            Eigen::Isometry3f G_cs = Eigen::Isometry3f::Identity();
-            G_cs.rotate(R_cs);
+            sensor_msgs::msg::PointCloud2 cloud_out;
+            pcl::toROSMsg(P, cloud_out);
+            cloud_out.header.frame_id = "compass";
+            cloud_out.header.stamp = stamp;
+            pc_pub_->publish(cloud_out);
 
-            PointCloud P_c;
-            pcl::transformPointCloud(P_s, P_c, G_cs);
-
-            publish(P_c, R_cs, directions, pose_msg.header.stamp);
 
         }
-    }
-
-    void callback(const PointCloud::ConstPtr &cloud_msg, const geometry_msgs::PoseStamped::ConstPtr &pose_msg) {
-
-        message_queue_.emplace_back(*cloud_msg, *pose_msg);
-
-        if (message_queue_.size() > queue_size_) {
-            message_queue_.pop_front();
-        }
-
-    }
-
-    void publish(const PointCloud &P, const Eigen::Matrix3f &R, const std::vector<Eigen::Vector3f> &directions,
-                 const ros::Time stamp) {
-
-        Eigen::Isometry3f G = Eigen::Isometry3f::Identity();
-        G.rotate(R);
-
-        geometry_msgs::TransformStamped transform;
-        transform.header.frame_id = "compass";
-        transform.header.stamp = stamp;
-        transform.child_frame_id = "vehicle";
-        tf::transformEigenToMsg(G.cast<double>(), transform.transform);
-        rot_pub_.publish(transform);
-
-        sbim_msgs::PrincipalDirectionArray principal_directions;
-        principal_directions.header.frame_id = "compass";
-        principal_directions.header.stamp = stamp;
-        for (auto &d : directions) {
-            geometry_msgs::Vector3 v;
-            tf::vectorEigenToMsg(d.cast<double>(), v);
-            principal_directions.directions.push_back(v);
-        }
-        pd_pub_.publish(principal_directions);
-
-        sensor_msgs::PointCloud2 cloud_out;
-        pcl::toROSMsg(P, cloud_out);
-        cloud_out.header.frame_id = "compass";
-        cloud_out.header.stamp = stamp;
-        pc_pub_.publish(cloud_out);
-
-
-    }
 
 };
 
 int main(int argc, char *argv[]) {
-    ros::init(argc, argv, "point_cloud_compass_node");
 
-    PointCloudCompassNode compass_node;
-    compass_node.loop();
-
+    rclcpp::init(argc, argv);
+    auto node = std::make_shared<PointCloudCompassNode>();
+    node->loop();
+    rclcpp::shutdown();
     return 0;
 }
 
