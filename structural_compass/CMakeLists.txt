@@ -35,6 +35,14 @@ ament_target_dependencies(point_cloud_compass_node
     pcl_conversions
 )
 
+install(TARGETS
+        point_cloud_compass_node
+        DESTINATION lib/${PROJECT_NAME}
+)
+
+install(DIRECTORY launch
+        DESTINATION share/${PROJECT_NAME}
+)
 
 ament_package()
 

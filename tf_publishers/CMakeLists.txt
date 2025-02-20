@@ -13,14 +13,30 @@ find_package(Eigen3 REQUIRED)
 
 add_executable(compass_to_tf src/compass_to_tf.cpp)
 ament_target_dependencies(compass_to_tf rclcpp tf2_ros tf2_eigen geometry_msgs message_filters Eigen3)
+install(TARGETS
+        compass_to_tf
+        DESTINATION lib/${PROJECT_NAME}
+)
 
 add_executable(odom_to_tf src/odom_to_tf.cpp)
 ament_target_dependencies(odom_to_tf rclcpp tf2_ros nav_msgs geometry_msgs)
+install(TARGETS
+        odom_to_tf
+        DESTINATION lib/${PROJECT_NAME}
+)
 
 add_executable(pose_to_tf src/pose_to_tf.cpp)
 ament_target_dependencies(pose_to_tf rclcpp tf2_ros tf2_eigen geometry_msgs)
+install(TARGETS
+        pose_to_tf
+        DESTINATION lib/${PROJECT_NAME}
+)
 
 add_executable(transform_to_tf src/transform_to_tf.cpp)
 ament_target_dependencies(transform_to_tf rclcpp tf2_ros tf2_eigen geometry_msgs Eigen3)
+install(TARGETS
+        transform_to_tf
+        DESTINATION lib/${PROJECT_NAME}
+)
 
 ament_package()
